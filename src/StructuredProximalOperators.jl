@@ -1,7 +1,7 @@
 module StructuredProximalOperators
 
-# Write your package code here.
 using LinearAlgebra
+using ManifoldsBase
 using Manifolds
 
 import Base: show, ==
@@ -17,16 +17,24 @@ export check_manifold_point, check_tangent_vector, show
 
 ## Regularizers exports
 export prox_αg, ∇M_g, ∇²M_g_ξ
-export regularizer_l1
-export regularizer_lnuclear
+export l1Manifold, regularizer_l1
+export FixedRank, regularizer_lnuclear
 
 
-abstract type AbstractRegularizer end
-const AbstractManifold = Manifolds.Manifold{ℝ}
+abstract type Regularizer end
 
 
 ## Helper
 softthresh(x, α) = sign(x) * max(0, abs(x) - α)
+
+
+##
+egrad_to_rgrad!(M::Manifold, gradf_x, x, ∇f_x) = project!(M, gradf_x, x, ∇f_x)
+egrad_to_rgrad(M::Manifold, x, ∇f_x) = project(M, x, ∇f_x)
+function ehess_to_rhess(M::Manifold, x, ∇f_x, ∇²f_ξ, ξ)
+    Hessf_xξ = Manifolds.allocate(ξ)
+    return ehess_to_rhess!(M, Hessf_xξ, x, ∇f_x, ∇²f_ξ, ξ)
+end
 
 
 ## Manifolds

@@ -2,7 +2,7 @@
 ##
 ## Nuclear norm regularization
 ##
-struct regularizer_lnuclear <: AbstractRegularizer end
+struct regularizer_lnuclear <: Regularizer end
 
 
 ## 0th order
@@ -17,28 +17,23 @@ function prox_αg(g::regularizer_lnuclear, x, α)
     k = count(x -> x > 0, st_spectrum)
     m, n = size(x)
 
-    return F.U * Diagonal(softthresh.(F.S, α)) * F.Vt, FixedRankMatrices(m, n, k)
+    return F.U * Diagonal(softthresh.(F.S, α)) * F.Vt, FixedRank(m, n, k)
 end
 
-function ∇M_g(g::regularizer_lnuclear, M::FixedRankMatrices{m,n,k,𝔽}, x) where {m,n,k,𝔽}
+function ∇M_g(g::regularizer_lnuclear, M::FixedRank{m,n,k}, x) where {m,n,k}
     F = svd(x)
     return F.U[:, 1:k] * F.Vt[1:k, :]
 end
 
 
 ## 2nd order
-function ∇²M_g_ξ(
-    g::regularizer_lnuclear,
-    M::FixedRankMatrices{m,n,k,𝔽},
-    x,
-    ξ,
-) where {m,n,k,𝔽}
+function ∇²M_g_ξ(g::regularizer_lnuclear, M::FixedRank{m,n,k}, x, ξ) where {m,n,k}
     F = svd(x, full = true)
 
     U = F.U[:, 1:k]
-    Uperp = F.U[:, k+1:end]
+    Uperp = F.U[:, (k + 1):end]
     tV = F.Vt[1:k, :]
-    tVperp = F.Vt[k+1:end, :]
+    tVperp = F.Vt[(k + 1):end, :]
     Σ = Diagonal(F.S[1:k])
 
     B₁ = transpose(Uperp) * ξ * transpose(tV) * inv(Σ)

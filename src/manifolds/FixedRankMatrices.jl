@@ -7,19 +7,11 @@
 
 # Types
 # ---
-struct FixedRank{m,n,k} <: AbstractManifold where {m,n,k}
-    name::String
-    abbreviation::String
-    FixedRank{m,n,k}() where {m,n,k} = new("Fixed $k-rank of $m×$n matrices", "$m×$n - $k")
+struct FixedRank{m,n,k} <: Manifolds.Manifold{ℝ}
 end
 FixedRank(m::Int, n::Int, k::Int) = FixedRank{m,n,k}()
 
-
-const MatrixFixedRankMPoint = Matrix
-const MatrixFixedRankTVector = Matrix
-
-const VectorFixedRankMPoint = Vector
-const VectorFixedRankTVector = Vector
+# FixedRank{m,n,k}() where {m,n,k} = new("Fixed $k-rank of $m×$n matrices", "$m×$n - $k")
 
 copy(M::FixedRank{m,n,k}) where {m,n,k} = FixedRank{m,n,k}()
 
@@ -32,7 +24,7 @@ function randomMPoint(M::FixedRank{m,n,k}) where {m,n,k}
     A = rand(m, n)
     F = svd(A)
     singvals = F.S
-    singvals[k+1:end] .= 0
+    singvals[(k + 1):end] .= 0
     return F.U * Diagonal(singvals) * F.Vt
 end
 
@@ -40,7 +32,7 @@ function randomTVector(M::FixedRank{m,n,k}, x::MatrixFixedRankMPoint) where {m,n
     F = svd(x)
 
     M = rand(size(F.U, 2), size(F.Vt, 1))
-    M[k+1:end, k+1:end] .= 0
+    M[(k + 1):end, (k + 1):end] .= 0
 
     res = F.U * M * F.Vt
     res /= norm(res)
@@ -62,7 +54,7 @@ function project!(
     F = svd(x)
 
     innerdecomp = transpose(F.U) * q * transpose(F.Vt)
-    innerdecomp[k+1:end, k+1:end] .= 0
+    innerdecomp[(k + 1):end, (k + 1):end] .= 0
     ξ = F.U * innerdecomp * F.Vt
     return ξ
 end
@@ -119,8 +111,9 @@ end
 
 
 # Euclidean to riemannian gradients, hessians at vectors.
-egrad_to_rgrad!(M::FixedRank{m,n,k}, gradf_x, x, ∇f_x) where {m,n,k} =
-    project!(M, gradf_x, x, ∇f_x)
+function egrad_to_rgrad!(M::FixedRank{m,n,k}, gradf_x, x, ∇f_x) where {m,n,k}
+    return project!(M, gradf_x, x, ∇f_x)
+end
 egrad_to_rgrad(M::FixedRank{m,n,k}, x, ∇f_x) where {m,n,k} = project(M, x, ∇f_x)
 
 
@@ -135,9 +128,9 @@ function ehess_to_rhess!(
     F = svd(x, full = true)
 
     U = F.U[:, 1:k]
-    Uperp = F.U[:, k+1:end]
+    Uperp = F.U[:, (k + 1):end]
     tV = F.Vt[1:k, :]
-    tVperp = F.Vt[k+1:end, :]
+    tVperp = F.Vt[(k + 1):end, :]
     Σ = Diagonal(F.S[1:k])
 
     B₁ = transpose(Uperp) * ξ * transpose(tV) * inv(Σ)
@@ -209,10 +202,10 @@ function check_tangent_vector(
 
     F = svd(x)
     innerdecomp = transpose(F.U) * ξ * transpose(F.Vt)
-    orthcomp = norm(innerdecomp[k+1:end, k+1:end])
+    orthcomp = norm(innerdecomp[(k + 1):end, (k + 1):end])
     if orthcomp > 5e-13
         return DomainError(
-            norm(innerdecomp[k+1:end, k+1:end]),
+            norm(innerdecomp[(k + 1):end, (k + 1):end]),
             "ξ has nonzero norm ($orthcomp) component on the orthogonal space.",
         )
     end
