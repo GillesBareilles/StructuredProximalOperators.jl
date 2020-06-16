@@ -1,131 +1,41 @@
-# import Base: exp, log, show, copy
-# import LinearAlgebra: norm, dot
 
-# using Base: eps
-# using LinearAlgebra: svd, Diagonal, rank, diag, diagm, eigen, eigvals, eigvecs, tr, triu, qr, cholesky, Hermitian
-
-
-# Types
-# ---
-struct FixedRank{m,n,k} <: Manifolds.Manifold{ℝ}
-end
-FixedRank(m::Int, n::Int, k::Int) = FixedRank{m,n,k}()
-
-# FixedRank{m,n,k}() where {m,n,k} = new("Fixed $k-rank of $m×$n matrices", "$m×$n - $k")
-
-copy(M::FixedRank{m,n,k}) where {m,n,k} = FixedRank{m,n,k}()
-
-
-# Functions
-# ---
-manifold_dimension(M::FixedRank{m,n,k}) where {m,n,k} = k(m + n - k)
-
-function randomMPoint(M::FixedRank{m,n,k}) where {m,n,k}
+function randomMPoint(M::FixedRankMatrices{m,n,k,ℝ}) where {m,n,k}
     A = rand(m, n)
     F = svd(A)
-    singvals = F.S
-    singvals[(k + 1):end] .= 0
-    return F.U * Diagonal(singvals) * F.Vt
+    return SVDMPoint(F.U[:, 1:k], F.S[1:k] .+ 0.5, F.Vt[1:k, :])
 end
 
-function randomTVector(M::FixedRank{m,n,k}, x::MatrixFixedRankMPoint) where {m,n,k}
-    F = svd(x)
-
-    M = rand(size(F.U, 2), size(F.Vt, 1))
-    M[(k + 1):end, (k + 1):end] .= 0
-
-    res = F.U * M * F.Vt
-    res /= norm(res)
-    return res
+function randomTVector(M::FixedRankMatrices{m,n,k,ℝ}, x) where {m,n,k}
+    ξ = zero_tangent_vector(M, x)
+    project!(M, ξ, x, rand(m, n))
+    return ξ /= norm(M, x, ξ)
 end
 
-
-# metric
-inner(M::FixedRank, x, ξ, ν) = dot(ξ, ν)
-norm(M::FixedRank, x, ξ) = inner(M, x, ξ, ξ)
-
-# Tangent space
-function project!(
-    M::FixedRank{m,n,k},
-    ξ::MatrixFixedRankTVector,
-    x::MatrixFixedRankMPoint,
-    q::AbstractMatrix,
-) where {m,n,k}
-    F = svd(x)
-
-    innerdecomp = transpose(F.U) * q * transpose(F.Vt)
-    innerdecomp[(k + 1):end, (k + 1):end] .= 0
-    ξ = F.U * innerdecomp * F.Vt
-    return ξ
-end
-function project(
-    M::FixedRank{m,n,k},
-    x::MatrixFixedRankMPoint,
-    q::AbstractMatrix,
-) where {m,n,k}
-    ξ = zeros(size(x))
-    return project!(M, ξ, x, q)
+embed!(::FixedRankMatrices, q, p) = (q = p.U * Diagonal(p.S) * p.Vt)
+function embed(M::FixedRankMatrices{m,n,k,ℝ}, p::SVDMPoint) where {m,n,k}
+    p_embed = zeros(m, n)
+    return embed!(M, p_embed, p)
 end
 
-## TODO: improve this implementation and the handling of different representations of points/vectors
-function project(
-    M::FixedRank{m,n,k},
-    x::VectorFixedRankMPoint,
-    q::AbstractVector,
-) where {m,n,k}
-    X = reshape(x, (m, n))
-    Q = reshape(q, (m, n))
-    return vec(project(M, X, Q))
+function embed!(::FixedRankMatrices, ξ_embed, p, ξ)
+    return (ξ_embed = p.U * ξ.M * p.Vt + ξ.U * p.Vt + p.U * ξ.Vt)
+end
+function embed(M::FixedRankMatrices{m,n,k,ℝ}, p::SVDMPoint, ξ::UMVTVector) where {m,n,k}
+    ξ_embed = zeros(m, n)
+    return embed!(M, ξ_embed, p, ξ)
 end
 
-
-function retract!(
-    M::FixedRank{m,n,k},
-    y::MatrixFixedRankMPoint,
-    x::MatrixFixedRankMPoint,
-    ξ::MatrixFixedRankTVector,
-) where {m,n,k}
-    F = svd(x + ξ)
-    y = F.U[:, 1:k] * Diagonal(F.S[1:k]) * F.Vt[1:k, :]
-    return y
-end
-function retract(
-    M::FixedRank{m,n,k},
-    x::MatrixFixedRankMPoint,
-    ξ::MatrixFixedRankTVector,
-) where {m,n,k}
-    y = zeros(size(x))
-    return retract!(M, y, x, ξ)
-end
-
-
-function retract(
-    M::FixedRank{m,n,k},
-    x::VectorFixedRankMPoint,
-    ξ::VectorFixedRankTVector,
-) where {m,n,k}
-    X = reshape(x, (m, n))
-    Ξ = reshape(ξ, (m, n))
-    return vec(retract(M, X, Ξ))
-end
-
-
-# Euclidean to riemannian gradients, hessians at vectors.
-function egrad_to_rgrad!(M::FixedRank{m,n,k}, gradf_x, x, ∇f_x) where {m,n,k}
-    return project!(M, gradf_x, x, ∇f_x)
-end
-egrad_to_rgrad(M::FixedRank{m,n,k}, x, ∇f_x) where {m,n,k} = project(M, x, ∇f_x)
-
-
-function ehess_to_rhess!(
-    M::FixedRank{m,n,k},
-    Hessf_xξ,
-    x::MatrixFixedRankMPoint,
+function ehess_to_rhess(
+    M::FixedRankMatrices{m,n,k,ℝ},
+    x::SVDMPoint,
     ∇f_x,
     ∇²f_ξ,
-    ξ::MatrixFixedRankTVector,
+    ξ::UMVTVector,
 ) where {m,n,k}
-    F = svd(x, full = true)
+
+    ## Dummy computation
+    Hessf_xξ = zeros(m, n)
+    F = svd(embed(M, x), full = true)
 
     U = F.U[:, 1:k]
     Uperp = F.U[:, (k + 1):end]
@@ -133,96 +43,65 @@ function ehess_to_rhess!(
     tVperp = F.Vt[(k + 1):end, :]
     Σ = Diagonal(F.S[1:k])
 
-    B₁ = transpose(Uperp) * ξ * transpose(tV) * inv(Σ)
-    tB₂ = inv(Σ) * transpose(U) * ξ * transpose(tVperp)
+    B₁ = transpose(Uperp) * embed(M, x, ξ) * transpose(tV) * inv(Σ)
+    tB₂ = inv(Σ) * transpose(U) * embed(M, x, ξ) * transpose(tVperp)
 
-    tUperpξVperp = transpose(Uperp) * ξ * transpose(tVperp)
+    tUperpξVperp = transpose(Uperp) * embed(M, x, ξ) * transpose(tVperp)
 
-    project!(M, Hessf_xξ, x, x + ∇²f_ξ)
+    # project!(M, Hessf_xξ, x, ∇²f_ξ)
+    Hessf_xξ = ∇²f_ξ
     Hessf_xξ += U * transpose(B₁) * tUperpξVperp * tVperp
     Hessf_xξ += Uperp * tUperpξVperp * transpose(tB₂) * tV
-    return Hessf_xξ
-end
-function ehess_to_rhess(M::FixedRank, x, ∇f_x, ∇²f_ξ, ξ)                                    # ! this should factor out
-    Hessf_xξ = zeros(size(ξ))
-    return ehess_to_rhess!(M, Hessf_xξ, x, ∇f_x, ∇²f_ξ, ξ)
+
+    res = zero_tangent_vector(M, x)
+    project!(M, res, x, Hessf_xξ)
+
+    display(res)
+
+    return res
+    # ## Direct computation
+    # res = UMVTVector(
+    #     (Diagonal(ones(m)) - x.U * x.U') *
+    #     (∇²f_ξ * x.Vt' + ∇f_x * ξ.Vt' * Diagonal(x.S .^ -1)),
+    #     x.U' * ∇²f_ξ * x.Vt',
+    #     (
+    #         (Diagonal(ones(n)) - x.Vt' * x.Vt) *
+    #         (∇²f_ξ' * x.U + ∇f_x' * ξ.U * Diagonal(x.S .^ -1))
+    #     )',
+    # )
+
+    # display(res)
+
+    @assert false
+    return res
 end
 
 
-function ehess2rhess(
-    M::FixedRank{m,n,k},
-    x::VectorFixedRankMPoint,
-    ∇f_x,
-    ∇²f_ξ,
-    ξ::VectorFixedRankTVector,
+function inner(
+    ::FixedRankMatrices{m,n,k,ℝ},
+    x,
+    ξ::AbstractMatrix,
+    η::AbstractMatrix,
 ) where {m,n,k}
-    X = reshape(x, (m, n))
-    Ξ = reshape(ξ, (m, n))
-    ∇f_x_mat = reshape(∇f_x, (m, n))
-    ∇²f_ξ_mat = reshape(∇²f_ξ, (m, n))
-    return vec(ehess_to_rhess(M, X, ∇f_x_mat, ∇²f_ξ_mat, Ξ))
+    return dot(ξ, η)
 end
 
-# Validation
-# ---
-function check_manifold_point(M::FixedRank{m,n,k}, x::MatrixFixedRankMPoint) where {m,n,k}
-    if size(x, 1) != m || size(x, 2) != n
-        return DomainError(
-            size(x),
-            "The dimension of x must be ($m, $n) but it is $(size(x))",
-        )
-    end
-
-    x_rank = rank(x)
-    if x_rank != k
-        return DomainError(x_rank, "x should have rank $k, but it is $x_rank.")
-    end
-    return nothing
+# retract(M::FixedRankMatrices{m,n,k,ℝ}, x, ξ) where {m,n,k} = retract(M, x, ξ, PolarRetraction())
+function retract(M::FixedRankMatrices{m,n,k,ℝ}, x, ξ) where {m,n,k}
+    F = svd(embed(M, x) + embed(M, x, ξ))
+    return SVDMPoint(F.U[:, 1:k], F.S[1:k], F.Vt[1:k, :])
 end
 
-## ! this should probably handle the dims of x as a vector...
-function check_manifold_point(M::FixedRank{m,n,k}, x::VectorFixedRankMPoint) where {m,n,k}
-    X = reshape(x, (m, n))
-    return check_manifold_point(M, X)
-end
-
-function check_tangent_vector(
-    M::FixedRank{m,n,k},
-    x::MatrixFixedRankMPoint,
-    ξ::MatrixFixedRankTVector,
+function project!(
+    M::FixedRankMatrices{m,n,k,ℝ},
+    ξ::AbstractMatrix,
+    p,
+    A::AbstractMatrix,
 ) where {m,n,k}
-    check_manifold_point(M, x)
-
-    if size(ξ) != (m, n)
-        return DomainError(
-            size(ξ),
-            "The dimension of ξ must be ($m, $n) but it is $(size(x))",
-        )
-    end
-
-    F = svd(x)
-    innerdecomp = transpose(F.U) * ξ * transpose(F.Vt)
-    orthcomp = norm(innerdecomp[(k + 1):end, (k + 1):end])
-    if orthcomp > 5e-13
-        return DomainError(
-            norm(innerdecomp[(k + 1):end, (k + 1):end]),
-            "ξ has nonzero norm ($orthcomp) component on the orthogonal space.",
-        )
-    end
-    return nothing
+    av = A * (p.Vt')
+    uTav = p.U' * av
+    aTu = A' * p.U
+    ξ .=
+        p.U * uTav * p.Vt + (A * p.Vt' - p.U * uTav) * p.Vt + p.U * ((aTu - p.Vt' * uTav')')
+    return ξ
 end
-
-## ! this should probably handle x and ξ as vectors...
-function check_tangent_vector(
-    M::FixedRank{m,n,k},
-    x::VectorFixedRankMPoint,
-    ξ::VectorFixedRankTVector,
-) where {m,n,k}
-    X = reshape(x, (m, n))
-    Ξ = reshape(ξ, (m, n))
-    return check_tangent_vector(M, X, Ξ)
-end
-
-# Display
-# ---
-show(io::IO, M::FixedRank) = print(io, M.abbreviation)

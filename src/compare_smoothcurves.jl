@@ -1,6 +1,6 @@
 
 
-function compare_curves(refcurve, args...; tmin = 1e-8, tmax = 1, npoints = 50)
+function compare_curves(args...; tmin = 1e-8, tmax = 1, npoints = 50)
     ts = 10 .^ range(log(10, tmin), stop = log(10, tmax), length = npoints)
 
     curves = Dict(Symbol(r) => [] for r in args if r isa Function)
@@ -9,8 +9,11 @@ function compare_curves(refcurve, args...; tmin = 1e-8, tmax = 1, npoints = 50)
 
     for (i, t) in enumerate(ts)
         for curve in args
-            curve isa Function &&
-                push!(curves[Symbol(curve)], (t, norm(refcurve(t) - curve(t))))
+            if curve isa Function
+                val = curve(t)
+                @assert val >= 0 "curve should be positive, value is $(curve(t))."
+                push!(curves[Symbol(curve)], (t, val))
+            end
         end
         push!(curves[:slope2], (t, t^2))
         push!(curves[:slope3], (t, t^3))
@@ -107,65 +110,42 @@ function check_e2r_gradient_hessian(M; FIGS_FOLDER = ".")
 
     @show ηgradfx, ηHessf_xη
 
-    fbase(t) = f(embed(M, retract(M, x, t * η)))
-    frgrad(t) = f(embed(M, x)) + t * ηgradfx
-    frhess(t) = f(embed(M, x)) + t * ηgradfx + 0.5 * t^2 * ηHessf_xη
+    frgrad(t) = abs(f(embed(M, retract(M, x, t * η))) - f(embed(M, x)) + t * ηgradfx)
+    function frhess(t)
+        return abs(
+            f(embed(M, retract(M, x, t * η))) - f(embed(M, x)) +
+            t * ηgradfx +
+            0.5 * t^2 * ηHessf_xη,
+        )
+    end
 
-    comparison = compare_curves(fbase, frgrad, frhess)
+    comparison = compare_curves(frgrad, frhess)
     return display_curvescomparison(comparison)
 end
 
 
-function check_retraction(M, manifoldname; regularizer = nothing, FIGS_FOLDER = ".")
+function check_retraction(M)
 
+    Random.seed!(1234)
     x = randomMPoint(M)
+    Random.seed!(4312)
     η = randomTVector(M, x)
 
-    npoints = 50
-    ts = 10 .^ range(-8, stop = 0, length = npoints)
-    errors_retraction, slope2, slope3 = [], [], []
-    errors_Absil = []
-    for (i, t) in enumerate(ts)
-        push!(
-            errors_retraction,
-            (t, norm(projection(M, x, retraction(M, x, t * η) - t * η))),
-        )
-        push!(slope2, (t, t^2))
-        push!(slope3, (t, t^3))
+    x_emb = embed(M, x)
+    η_emb = embed(M, x, η)
+
+    function retractiontη(t)
+        retracted = retract(M, x, t * η)
+        return embed(M, retracted)
+    end
+    xtη(t) = x_emb + t * η_emb
+
+    function retractionerror(t; x = x)
+        return norm(project(M, x, retractiontη(t) - xtη(t)))
     end
 
+    comparison = compare_curves(retractionerror)
+    return display_curvescomparison(comparison)
 
-
-    ## Plot section.
-    ps = []
-    push!(ps, PlotInc(PGFPlotsX.Options("mark" => "x"), Coordinates(errors_retraction)))
-    push!(ps, LegendEntry("retraction error"))
-    push!(ps, PlotInc(PGFPlotsX.Options("no marks" => nothing), Coordinates(slope2)))
-    push!(ps, LegendEntry("slope 2"))
-    push!(ps, PlotInc(PGFPlotsX.Options("no marks" => nothing), Coordinates(slope3)))
-    push!(ps, LegendEntry("slope 3"))
-
-
-
-    ## Plot errors:
-    fig_time_subopt = @pgf Axis(
-        {
-            xmode = "log",
-            ymode = "log",
-            height = "12cm",
-            width = "12cm",
-            xlabel = "t",
-            ylabel = L"\|proj_x(R_x(t\eta)-t\eta)\|",
-            legend_pos = "outer north east",
-            title = "check retraction - $manifoldname manifold",
-        },
-        ps...,
-    )
-
-    ## Plotting section
-    filename = "check_retraction_$manifoldname"
-    println("Saving: ", filename * ".pdf")
-    pgfsave(joinpath(FIGS_FOLDER, filename * ".pdf"), fig_time_subopt)
-
-    return println()
+    # (t, norm(projection(M, x, retraction(M, x, t * η) - t * η))),
 end
