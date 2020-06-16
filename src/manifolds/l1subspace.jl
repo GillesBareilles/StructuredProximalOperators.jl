@@ -1,5 +1,5 @@
 
-struct l1Manifold{n} <: AbstractEmbeddedManifold{ℝ,DefaultEmbeddingType}
+struct l1Manifold{n} <: Manifold{ℝ}
     nnz_coords::BitArray{1}
 end
 function l1Manifold(nnz_coords)
@@ -7,15 +7,12 @@ function l1Manifold(nnz_coords)
 end
 
 
-function check_manifold_point(M::l1Manifold, x; kwargs...)
-    mpv = invoke(
-        check_manifold_point,
-        Tuple{(typeof(get_embedding(M))),typeof(p)},
-        get_embedding(M),
-        p;
-        kwargs...,
-    )
-    mpv === nothing || return mpv
+==(M::l1Manifold, N::l1Manifold) = (M.nnz_coords == N.nnz_coords)
+
+function check_manifold_point(M::l1Manifold{n}, x; kwargs...) where {n}
+    if size(x) != (n,)
+        return DomainError(size(x), "x should be vector of size $n.")
+    end
     norm_zerocoords = norm(x .* (1 .- M.nnz_coords))
     if norm_zerocoords > 0
         return DomainError(
@@ -31,21 +28,11 @@ function check_tangent_vector(M::l1Manifold, x, ξ; check_base_point = true, kwa
         mpe = check_manifold_point(M, x; kwargs...)
         mpe === nothing || return mpe
     end
-    mpv = invoke(
-        check_tangent_vector,
-        Tuple{typeof(get_embedding(M)),typeof(p),typeof(X)},
-        get_embedding(M),
-        p,
-        X;
-        check_base_point = false, # already checked above
-        kwargs...,
-    )
-    mpv === nothing || return mpv
     check_manifold_point(M, ξ; kwargs...)
     return nothing
 end
 
-decorated_manifold(M::l1Manifold) = Euclidean(representation_size(M)...; field = ℝ)
+# decorated_manifold(M::l1Manifold) = Euclidean(representation_size(M)...; field = ℝ)
 
 
 distance(::l1Manifold, p, q) = norm(p - q)
@@ -64,8 +51,11 @@ function ehess_to_rhess(M::l1Manifold, x, ∇f_x, ∇²f_ξ, ξ)              # 
 end
 
 
-embed!(::l1Manifold, X, x) = copyto!(X, x)
-embed!(::l1Manifold, Xi, x, ξ) = copyto!(Xi, ξ)
+# embed!(::l1Manifold, X, x) = copyto!(X, x)
+# embed!(::l1Manifold, Xi, x, ξ) = copyto!(Xi, ξ)
+
+embed(::l1Manifold, x) = x
+embed(::l1Manifold, x, ξ) = ξ
 
 exp!(::l1Manifold, y, x, ξ) = (@. y = x + ξ)
 
@@ -76,14 +66,28 @@ exp!(::l1Manifold, y, x, ξ) = (@. y = x + ξ)
 manifold_dimension(::l1Manifold{n}) where {n} = n
 
 function name(M::l1Manifold; short = true)
-    return short ? "l1-$(sum(nnz_coords))/$(length(nnz_coords))" :
-           "l1Manifold with $(sum(nnz_coords)) nnz"
+    return short ? "l1-$(sum(M.nnz_coords))/$(length(M.nnz_coords))" :
+           "l1Manifold with $(sum(M.nnz_coords)) nnz"
 end
 
 norm(::l1Manifold, x, ξ) = norm(ξ)
 
-project!(M::l1Manifold, ξ, x, X) = (@. ξ = X * M.nnz_coords)
+function project!(M::l1Manifold, ξ, x, X)
+    (@. ξ = X * M.nnz_coords)
+    return ξ
+end
 project!(M::l1Manifold, x, X) = (@. x = X * M.nnz_coords)
+
+function randomMPoint(M::l1Manifold)
+    n = length(M.nnz_coords)
+    return (2 * rand(n) .- 1) .* M.nnz_coords
+end
+
+function randomTVector(M::l1Manifold, x)
+    pt = randomMPoint(M)
+    pt /= norm(pt)
+    return pt
+end
 
 representation_size(::l1Manifold{n}) where {n} = (n)
 
@@ -112,16 +116,6 @@ zero_tangent_vector!(M::l1Manifold, v, p) = fill!(v, 0)
 # # ---
 # manifold_dimension(M::l1Manifold) = sum(M.nnz_coords)
 
-# function randomMPoint(M::l1Manifold)
-#     n = length(M.nnz_coords)
-#     return (2 * rand(n) .- 1) .* M.nnz_coords
-# end
-
-# function randomTVector(M::l1Manifold, x::l1MPoint)
-#     pt = randomMPoint(M)
-#     pt /= norm(pt)
-#     return pt
-# end
 
 
 # # metric
