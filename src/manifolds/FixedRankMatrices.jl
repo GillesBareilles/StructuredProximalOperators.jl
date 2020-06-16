@@ -26,53 +26,21 @@ function embed(M::FixedRankMatrices{m,n,k,ℝ}, p::SVDMPoint, ξ::UMVTVector) wh
 end
 
 function ehess_to_rhess(
-    M::FixedRankMatrices{m,n,k,ℝ},
+    ::FixedRankMatrices{m,n,k,ℝ},
     x::SVDMPoint,
     ∇f_x,
     ∇²f_ξ,
     ξ::UMVTVector,
 ) where {m,n,k}
-
-    ## Dummy computation
-    Hessf_xξ = zeros(m, n)
-    F = svd(embed(M, x), full = true)
-
-    U = F.U[:, 1:k]
-    Uperp = F.U[:, (k + 1):end]
-    tV = F.Vt[1:k, :]
-    tVperp = F.Vt[(k + 1):end, :]
-    Σ = Diagonal(F.S[1:k])
-
-    B₁ = transpose(Uperp) * embed(M, x, ξ) * transpose(tV) * inv(Σ)
-    tB₂ = inv(Σ) * transpose(U) * embed(M, x, ξ) * transpose(tVperp)
-
-    tUperpξVperp = transpose(Uperp) * embed(M, x, ξ) * transpose(tVperp)
-
-    # project!(M, Hessf_xξ, x, ∇²f_ξ)
-    Hessf_xξ = ∇²f_ξ
-    Hessf_xξ += U * transpose(B₁) * tUperpξVperp * tVperp
-    Hessf_xξ += Uperp * tUperpξVperp * transpose(tB₂) * tV
-
-    res = zero_tangent_vector(M, x)
-    project!(M, res, x, Hessf_xξ)
-
-    display(res)
-
-    return res
-    # ## Direct computation
-    # res = UMVTVector(
-    #     (Diagonal(ones(m)) - x.U * x.U') *
-    #     (∇²f_ξ * x.Vt' + ∇f_x * ξ.Vt' * Diagonal(x.S .^ -1)),
-    #     x.U' * ∇²f_ξ * x.Vt',
-    #     (
-    #         (Diagonal(ones(n)) - x.Vt' * x.Vt) *
-    #         (∇²f_ξ' * x.U + ∇f_x' * ξ.U * Diagonal(x.S .^ -1))
-    #     )',
-    # )
-
-    # display(res)
-
-    @assert false
+    res = UMVTVector(
+        (Diagonal(ones(m)) - x.U * x.U') *
+        (∇²f_ξ * x.Vt' + ∇f_x * ξ.Vt' * Diagonal(x.S .^ -1)),
+        x.U' * ∇²f_ξ * x.Vt',
+        (
+            (Diagonal(ones(n)) - x.Vt' * x.Vt) *
+            (∇²f_ξ' * x.U + ∇f_x' * ξ.U * Diagonal(x.S .^ -1))
+        )',
+    )
     return res
 end
 

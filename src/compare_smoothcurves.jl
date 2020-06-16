@@ -105,17 +105,19 @@ function check_e2r_gradient_hessian(M; FIGS_FOLDER = ".")
     )
 
 
+    f_x = f(embed(M, x))
     ηgradfx = inner(M, x, η, gradf_x)
     ηHessf_xη = inner(M, x, get_rhess(M, x, η), η)
 
     @show ηgradfx, ηHessf_xη
 
-    frgrad(t) = abs(f(embed(M, retract(M, x, t * η))) - f(embed(M, x)) + t * ηgradfx)
+    frgrad(t) = abs(
+        f(embed(M, retract(M, x, t * η))) - (f(embed(M, x)) + t * ηgradfx)
+    )
     function frhess(t)
         return abs(
-            f(embed(M, retract(M, x, t * η))) - f(embed(M, x)) +
-            t * ηgradfx +
-            0.5 * t^2 * ηHessf_xη,
+            f(embed(M, retract(M, x, t * η))) -
+            (f_x + t * ηgradfx + 0.5 * t^2 * ηHessf_xη),
         )
     end
 
@@ -125,7 +127,6 @@ end
 
 
 function check_retraction(M)
-
     Random.seed!(1234)
     x = randomMPoint(M)
     Random.seed!(4312)
@@ -146,6 +147,4 @@ function check_retraction(M)
 
     comparison = compare_curves(retractionerror)
     return display_curvescomparison(comparison)
-
-    # (t, norm(projection(M, x, retraction(M, x, t * η) - t * η))),
 end
