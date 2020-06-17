@@ -37,7 +37,7 @@ export representation_size
 export embed!, embed, zero_tangent_vector
 
 ## Regularizers exports
-export prox_αg, ∇M_g, ∇²M_g_ξ
+export prox_αg, ∇M_g, ∇M_g!, ∇²M_g_ξ, ∇²M_g_ξ!
 export l1Manifold, regularizer_l1
 export FixedRankMatrices, regularizer_lnuclear, ℝ
 export SVDMPoint, UMVTVector
@@ -74,6 +74,9 @@ include("regularizers/regularizer_lnuclear.jl")
 include("compare_smoothcurves.jl")
 
 export compare_curves,
-    display_curvescomparison, check_e2r_gradient_hessian, check_retraction
+    display_curvescomparison,
+    check_e2r_gradient_hessian,
+    check_retraction,
+    check_regularizer_gradient_hessian
 
 end

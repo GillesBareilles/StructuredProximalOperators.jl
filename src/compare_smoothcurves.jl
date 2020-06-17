@@ -21,7 +21,7 @@ function compare_curves(args...; tmin = 1e-8, tmax = 1, npoints = 50)
     return curves
 end
 
-function display_curvescomparison(curves; FIGS_FOLDER = ".")
+function display_curvescomparison(curves)
     ps = []
 
     for (k, v) in curves
@@ -48,8 +48,53 @@ function display_curvescomparison(curves; FIGS_FOLDER = ".")
 end
 
 
+function check_regularizer_gradient_hessian(M, reg)
+    x = randomMPoint(M)
+    p = embed(M, retract(M, x, randomTVector(M, x)))
+    ξ = randomTVector(M, x)
+    η = randomTVector(M, x)
 
-function check_e2r_gradient_hessian(M; FIGS_FOLDER = ".")
+    f(x) = reg(x)
+    gradf_x = ∇M_g(reg, M, x)
+    hessf_x_ξ = ∇²M_g_ξ(reg, M, x, ξ)
+    hessf_x_η = ∇²M_g_ξ(reg, M, x, η)
+
+    # 1. Gradient is tangent.
+    println("- gradf(x) ∈ T_x M:\t\t\t\t", is_tangent_vector(M, x, gradf_x; atol = 1e-10))
+
+    # 2. Hessian is symetric
+    println(
+        "- Hess f(x)[η] ∈ T_x M:\t\t\t\t",
+        is_tangent_vector(M, x, hessf_x_η, atol = 1e-10),
+    )
+    println(
+        "- Hess f(x)[ξ] ∈ T_x M:\t\t\t\t",
+        is_tangent_vector(M, x, hessf_x_ξ, atol = 1e-10),
+    )
+    println(
+        "- ⟨Hess f(x)[ξ], η⟩ - ⟨Hess f(x)[η], ξ⟩:\t",
+        inner(M, x, hessf_x_η, ξ) - inner(M, x, hessf_x_ξ, η),
+    )
+
+    f_x = f(embed(M, x))
+    ηgradfx = inner(M, x, η, gradf_x)
+    ηHessf_xη = inner(M, x, η, hessf_x_η)
+
+    @show ηgradfx, ηHessf_xη
+
+    frgrad(t) = abs(f(embed(M, retract(M, x, t * η))) - (f(embed(M, x)) + t * ηgradfx))
+    function frhess(t)
+        return abs(
+            f(embed(M, retract(M, x, t * η))) - (f_x + t * ηgradfx + 0.5 * t^2 * ηHessf_xη),
+        )
+    end
+
+    comparison = compare_curves(frgrad, frhess)
+    return display_curvescomparison(comparison)
+end
+
+
+function check_e2r_gradient_hessian(M)
     x = randomMPoint(M)
     p = embed(M, retract(M, x, randomTVector(M, x)))
 
@@ -78,11 +123,8 @@ function check_e2r_gradient_hessian(M; FIGS_FOLDER = ".")
     gradf_x = get_rgrad(M, x)
 
     # 1. gradf ∈ T_x M
-    println(
-        "- dist(gradf(x), T_x M):\t\t\t",
-        is_tangent_vector(M, x, gradf_x; atol = 1e-10),
-    )
-    println("- dist(η,        T_x M):\t\t\t", is_tangent_vector(M, x, η; atol = 1e-10))
+    println("- gradf(x) ∈ T_x M:\t\t\t\t", is_tangent_vector(M, x, gradf_x; atol = 1e-10))
+    println("- η ∈ T_x M:\t\t\t\t\t", is_tangent_vector(M, x, η; atol = 1e-10))
 
     # 2. Hessian is symetric
     η = randomTVector(M, x)
@@ -92,11 +134,11 @@ function check_e2r_gradient_hessian(M; FIGS_FOLDER = ".")
     hessf_x_ξ = get_rhess(M, x, ξ)
 
     println(
-        "- dist(Hess f(x)[η], T_x M):\t\t\t",
+        "- Hess f(x)[η] ∈ T_x M:\t\t\t\t",
         is_tangent_vector(M, x, hessf_x_η, atol = 1e-10),
     )
     println(
-        "- dist(Hess f(x)[ξ], T_x M):\t\t\t",
+        "- Hess f(x)[ξ] ∈ T_x M:\t\t\t\t",
         is_tangent_vector(M, x, hessf_x_ξ, atol = 1e-10),
     )
     println(
@@ -104,20 +146,16 @@ function check_e2r_gradient_hessian(M; FIGS_FOLDER = ".")
         inner(M, x, hessf_x_η, ξ) - inner(M, x, hessf_x_ξ, η),
     )
 
-
     f_x = f(embed(M, x))
     ηgradfx = inner(M, x, η, gradf_x)
     ηHessf_xη = inner(M, x, get_rhess(M, x, η), η)
 
     @show ηgradfx, ηHessf_xη
 
-    frgrad(t) = abs(
-        f(embed(M, retract(M, x, t * η))) - (f(embed(M, x)) + t * ηgradfx)
-    )
+    frgrad(t) = abs(f(embed(M, retract(M, x, t * η))) - (f(embed(M, x)) + t * ηgradfx))
     function frhess(t)
         return abs(
-            f(embed(M, retract(M, x, t * η))) -
-            (f_x + t * ηgradfx + 0.5 * t^2 * ηHessf_xη),
+            f(embed(M, retract(M, x, t * η))) - (f_x + t * ηgradfx + 0.5 * t^2 * ηHessf_xη),
         )
     end
 
