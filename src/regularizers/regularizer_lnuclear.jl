@@ -38,8 +38,16 @@ function ∇M_g!(
     end
     return grad_g
 end
-function ∇M_g(g::regularizer_lnuclear, M::FixedRankMatrices{m,n,k}, x) where {m,n,k}
+function ∇M_g(
+    g::regularizer_lnuclear,
+    M::FixedRankMatrices{m,n,k},
+    x::SVDMPoint,
+) where {m,n,k}
     grad_g = zero_tangent_vector(M, x)
+    return ∇M_g!(g, M, grad_g, x)
+end
+function ∇M_g(g::regularizer_lnuclear, M::FixedRankMatrices{m,n,k}, x) where {m,n,k}
+    grad_g = zero_tangent_vector(M, randomMPoint(M))            # ! dirty fix, to clean up with proper introduction of containers
     return ∇M_g!(g, M, grad_g, x)
 end
 
@@ -67,7 +75,7 @@ function ∇²M_g_ξ!(
     g::regularizer_lnuclear,
     M::FixedRankMatrices{m,n,k},
     hess_gxξ,
-    x,
+    x::SVDMPoint,
     ξ,
 ) where {m,n,k}
     hess_gxξ.M .= 0
@@ -111,12 +119,21 @@ function ∇²M_g_ξ!(
     display(hess_gxξ2)
     # return hess_gxξ2
 
-    @assert false "not correctly implemented yet."
+    @error false "not correctly implemented yet."
 
     return hess_gxξ
 end
 
-function ∇²M_g_ξ(g::regularizer_lnuclear, M::FixedRankMatrices{m,n,k}, x, ξ) where {m,n,k}
+function ∇²M_g_ξ(
+    g::regularizer_lnuclear,
+    M::FixedRankMatrices{m,n,k},
+    x::SVDMPoint,
+    ξ,
+) where {m,n,k}
     hess_gxξ = zero_tangent_vector(M, x)
+    return ∇²M_g_ξ!(g, M, hess_gxξ, x, ξ)
+end
+function ∇²M_g_ξ(g::regularizer_lnuclear, M::FixedRankMatrices{m,n,k}, x, ξ) where {m,n,k}
+    hess_gxξ = zero_tangent_vector(M, randomMPoint(M))          # !dirty fix, to clean with proper storage diff of points / vectors.
     return ∇²M_g_ξ!(g, M, hess_gxξ, x, ξ)
 end

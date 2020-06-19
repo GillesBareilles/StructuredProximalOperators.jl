@@ -13,7 +13,8 @@ import Manifolds:
     project!,
     representation_size,
     retract,
-    retract!
+    retract!,
+    zero_tangent_vector
 using LinearAlgebra
 using ManifoldsBase
 using Manifolds
@@ -32,6 +33,7 @@ export project, project!
 export retract, retract!
 export egrad_to_rgrad!, egrad_to_rgrad, ehess_to_rhess!, ehess_to_rhess
 export check_manifold_point, check_tangent_vector, show
+
 export is_manifold_point, is_tangent_vector
 export representation_size
 export embed!, embed, zero_tangent_vector

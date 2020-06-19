@@ -42,17 +42,25 @@ function main()
     γ(t) = retract(M, x, t * ξ)
 
     U = x.U
-    Vt = x.Vt
-
-
     U̇ = get_U̇(M, m, n, k, x, ξ)
 
+    display(U)
+    display(U̇)
+    display(project(M, x, U̇))
+
+
+    function errors_retraction(t)
+        return norm(embed(M, γ(t)) - x_emb - t * ξ_emb)
+    end
+    function errors_proj_retraction(t)
+        return norm(project(M, x, embed(M, γ(t)) - x_emb - t * ξ_emb))
+    end
     function errorsU(t)
-        F = svd(x_emb + t * ξ_emb)
+        F = svd(embed(M, γ(t)))
         return norm(F.U[:, 1:k] - (U + t * U̇))
     end
 
-    comparison = compare_curves(errorsU)
+    comparison = compare_curves(errors_retraction, errors_proj_retraction, errorsU)
     return display_curvescomparison(comparison)
 end
 

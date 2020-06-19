@@ -69,7 +69,10 @@ function project!(
     av = A * (p.Vt')
     uTav = p.U' * av
     aTu = A' * p.U
-    ξ .=
-        p.U * uTav * p.Vt + (A * p.Vt' - p.U * uTav) * p.Vt + p.U * ((aTu - p.Vt' * uTav')')
+    ξ .= p.U * uTav * p.Vt + (A * p.Vt' - p.U * uTav) * p.Vt + p.U * (aTu - p.Vt' * uTav')'
     return ξ
 end
+
+# function zero_tangent_vector(M::FixedRankMatrices{m,n,k,ℝ}, x::AbstractArray) where {m,n,k}
+#     return zeros(representation_size(M))
+# end

@@ -28,7 +28,7 @@ function display_curvescomparison(curves)
         legendentry = string(k)
         opts = occursin("slope", legendentry) ? Dict("no marks" => nothing) : Dict()
         push!(ps, PlotInc(PGFPlotsX.Options(opts...), Coordinates(v)))
-        push!(ps, LegendEntry(string(k)))
+        push!(ps, LegendEntry(replace(string(k), "_" => " ")))
     end
 
 
