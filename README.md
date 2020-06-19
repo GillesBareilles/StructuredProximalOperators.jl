@@ -27,6 +27,23 @@ julia> ∇²M_g_ξ(g, M, x, ξ); #For some tangent vector ξ.
 
 The manifolds try to stick to the API of `Manifolds.jl`, as defined [here](https://juliamanifolds.github.io/Manifolds.jl/latest/interface.html).
 
+### Checking retractions, gradient and hessians
+
+```julia
+julia> M = FixedRankMatrices(5, 6, 3)
+FixedRankMatrices(5, 6, 3, ℝ)
+
+julia> check_retraction(M)
+
+julia> check_e2r_gradient_hessian(M)
+- gradf(x) ∈ T_x M:				true
+- η ∈ T_x M:					true
+- Hess f(x)[η] ∈ T_x M:				true
+- Hess f(x)[ξ] ∈ T_x M:				true
+- ⟨Hess f(x)[ξ], η⟩ - ⟨Hess f(x)[η], ξ⟩:	0.0
+(ηgradfx, ηHessf_xη) = (-1.3226415096782111, 1.50236594681146)
+```
+
 ## TODOS:
 - test l1Subspace, FixedMatrices
 - devise test for regularizers
