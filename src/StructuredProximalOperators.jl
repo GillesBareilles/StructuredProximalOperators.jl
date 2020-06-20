@@ -5,6 +5,8 @@ import Manifolds:
     check_manifold_point,
     check_tangent_vector,
     distance,
+    embed,
+    embed!,
     exp!,
     inner,
     log!,

@@ -49,7 +49,10 @@ julia> check_e2r_gradient_hessian(M)
 - devise test for regularizers
 - check gradient / hessian of regularizers
 
-## mercredi 17 juin:
+### Wednesday 17th june:
 Both manifolds are decent enough to start working with. Euclidean to riemannian conversion functions are fine for l1 and lnuclear regularizers. l1 regularizer has correct riemannian gradient / hessians, but nuclear norm regularizer proves more difficult.
 
 WIP: get a first order development of the singular value decomposition, to be used to derive the riemannian hessian component of lnuclear regularizer. See `svd_development.jl` file.
+
+### Monday 22nd june:
+Svd development and nuclear regularizer second order fixed.

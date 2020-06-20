@@ -53,24 +53,6 @@ end
 
 
 ## 2nd order
-# function ∇²M_g_ξ!(g::regularizer_lnuclear, M::FixedRankMatrices{m,n,k}, hess_gxξ, x, ξ) where {m,n,k}
-#     #! NOTE: This should be done with Gram Schmidth, without forming full matrix...
-#     Ufull = zeros(m, m)
-#     Ufull[:, 1:k] .= x.U
-#     Uperp = nullspace(Ufull')
-
-#     Vfull = zeros(n, n)
-#     Vfull[1:k, :] .= x.Vt
-#     tVperp = nullspace(Vfull)'
-
-#     B₁ = Uperp' * embed(M, x, ξ) * x.Vt' * Diagonal(x.S.^(-1))
-#     tB₂ = Diagonal(x.S.^(-1)) * x.U' * embed(M, x, ξ) * tVperp'
-
-#     hess_gxξ.M .= 0
-#     hess_gxξ.U .= Uperp * B₁
-#     hess_gxξ.Vt .= tB₂ * tVperp
-#     return hess_gxξ
-# end
 function ∇²M_g_ξ!(
     g::regularizer_lnuclear,
     M::FixedRankMatrices{m,n,k},
@@ -78,48 +60,26 @@ function ∇²M_g_ξ!(
     x::SVDMPoint,
     ξ,
 ) where {m,n,k}
-    hess_gxξ.M .= 0
+
 
     F = zeros(k, k)
-    for i in 1:k, j in 1:k
+    @inbounds for i in 1:k, j in 1:k
         if x.S[i] != x.S[j]
-            F[i, j] = 1 / (x.S[j] - x.S[i])
+            F[i, j] = 1 / (x.S[j]^2 - x.S[i]^2)
         end
     end
 
-    hess_gxξ.U .=
+    ## 1. working implementation; litteral formula
+    U̇ =
         x.U * (F .* (ξ.M * Diagonal(x.S) + Diagonal(x.S) * ξ.M')) +
-        ξ.U * Diagonal(x.S .^ -1)
-    hess_gxξ.Vt .=
-        (
-            x.Vt' * (F .* (Diagonal(x.S) * ξ.M + ξ.M' * Diagonal(x.S))) +
-            ξ.Vt' * Diagonal(x.S .^ -1)
-        )'
+        ξ.U * Diagonal(x.S .^ (-1))
+    V̇t =
+        (-F .* (Diagonal(x.S) * ξ.M + ξ.M' * Diagonal(x.S))) * x.Vt +
+        Diagonal(x.S .^ (-1)) * ξ.Vt
 
+    project!(M, hess_gxξ, x, g.λ * (U̇ * x.Vt + x.U * V̇t))
 
-    ## old version
-    F = svd(embed(M, x), full = true)
-
-    U = F.U[:, 1:k]
-    Uperp = F.U[:, (k + 1):end]
-    tV = F.Vt[1:k, :]
-    tVperp = F.Vt[(k + 1):end, :]
-    Σ = Diagonal(F.S[1:k])
-
-    B₁ = transpose(Uperp) * embed(M, x, ξ) * transpose(tV) * inv(Σ)
-    tB₂ = inv(Σ) * transpose(U) * embed(M, x, ξ) * transpose(tVperp)
-
-    res_embed = Uperp * B₁ * tV + U * tB₂ * tVperp
-    hess_gxξ2 = zero_tangent_vector(M, x)
-    project!(M, hess_gxξ2, x, res_embed)
-
-    println("------")
-    display(hess_gxξ)
-    println("  ---   ")
-    display(hess_gxξ2)
-    # return hess_gxξ2
-
-    @error false "not correctly implemented yet."
+    # TODO: optimize this.
 
     return hess_gxξ
 end

@@ -2,7 +2,9 @@
 function randomMPoint(M::FixedRankMatrices{m,n,k,ℝ}) where {m,n,k}
     A = rand(m, n)
     F = svd(A)
-    return SVDMPoint(F.U[:, 1:k], F.S[1:k] .+ 0.5, F.Vt[1:k, :])
+    # We need this trick to ensure the point is 'qualified' and continuity of svd.
+    A .= F.U[:, 1:k] * Diagonal(F.S[1:k] .+ 0.5) * F.Vt[1:k, :]
+    return SVDMPoint(A, k)
 end
 
 function randomTVector(M::FixedRankMatrices{m,n,k,ℝ}, x) where {m,n,k}
@@ -70,6 +72,20 @@ function project!(
     uTav = p.U' * av
     aTu = A' * p.U
     ξ .= p.U * uTav * p.Vt + (A * p.Vt' - p.U * uTav) * p.Vt + p.U * (aTu - p.Vt' * uTav')'
+    return ξ
+end
+
+function project!(
+    M::FixedRankMatrices{m,n,k,ℝ},
+    ξ::AbstractMatrix,
+    x::AbstractMatrix,
+    A::AbstractMatrix,
+) where {m,n,k}
+    F = svd(x)
+
+    innerdecomp = F.U' * A * F.Vt'
+    innerdecomp[(k + 1):end, (k + 1):end] .= 0
+    ξ = F.U * innerdecomp * F.Vt
     return ξ
 end
 
