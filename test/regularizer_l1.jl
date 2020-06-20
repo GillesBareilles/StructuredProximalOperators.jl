@@ -11,4 +11,10 @@
     @test ∇M_g(g, M, y) == [0.0, 0.0, 0.5, 0.5, 0.5]
 
     @test norm(∇²M_g_ξ(g, M, y, rand(5))) == 0
+
+    comparison = check_regularizer_gradient_hessian(M, g)
+    for (k, slope) in [(:frgrad, 2), (:frhess, 3)]
+        regressiondata = remove_small_functionvals(comparison[k])
+        @test length(regressiondata) == 0
+    end
 end

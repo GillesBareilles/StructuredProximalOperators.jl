@@ -89,8 +89,7 @@ function check_regularizer_gradient_hessian(M, reg)
         )
     end
 
-    comparison = compare_curves(frgrad, frhess)
-    return display_curvescomparison(comparison)
+    return compare_curves(frgrad, frhess)
 end
 
 
@@ -159,8 +158,7 @@ function check_e2r_gradient_hessian(M)
         )
     end
 
-    comparison = compare_curves(frgrad, frhess)
-    return display_curvescomparison(comparison)
+    return compare_curves(frgrad, frhess)
 end
 
 
@@ -183,6 +181,36 @@ function check_retraction(M)
         return norm(project(M, x, retractiontη(t) - xtη(t)))
     end
 
-    comparison = compare_curves(retractionerror)
-    return display_curvescomparison(comparison)
+    return compare_curves(retractionerror)
 end
+
+
+
+function remove_small_functionvals(values; threshold = 1e-12)
+    return filter(x -> x[2] >= threshold, values)
+end
+
+function get_sloperesidual(data; threshold = 1e-12)
+    n = length(data)
+    x = [data[i][1] for i in 1:n]
+    logy = [log(data[i][2]) for i in 1:n]
+
+    ## Fit linear regressor
+    # model : y = βx + c
+    # explain Y = [log.(y) 1] by X = [log.(x)]
+    # Y = X β
+    # β ∈ ℝ 2x1 - slope and absciss at origin
+    # X ∈ ℝ nx2 - absciss and intercept
+    # Y ∈ ℝ nx1 - ordonate
+    X = ones(n, 2)
+    X[:, 1] = log.(x)
+    Y = logy
+
+    F = factorize(X' * X)
+    β = F \ X' * Y
+    predictedslope = β[1]
+    residual = 0.5 * norm((Y - X * β)[:, 1])^2
+    return predictedslope, residual
+end
+
+export get_sloperesidual, remove_small_functionvals

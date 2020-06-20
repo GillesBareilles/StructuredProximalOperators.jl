@@ -55,4 +55,8 @@ Both manifolds are decent enough to start working with. Euclidean to riemannian 
 WIP: get a first order development of the singular value decomposition, to be used to derive the riemannian hessian component of lnuclear regularizer. See `svd_development.jl` file.
 
 ### Monday 22nd june:
-Svd development and nuclear regularizer second order fixed.
+- Svd development and nuclear regularizer second order fixed.
+- Slope detection implemented. Review of test threshold parameters for regression would be good.
+
+TODO:
+- properly test first and second order devs (tangent space, symmetry, slopes) for regularizers / conversion functions.
