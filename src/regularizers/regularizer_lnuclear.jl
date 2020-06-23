@@ -26,6 +26,16 @@ function prox_αg(g::regularizer_lnuclear, x, α)
     return F.U * Diagonal(st_spectrum) * F.Vt, FixedRankMatrices(m, n, k, ℝ)
 end
 
+function prox_αg(g::regularizer_lnuclear, x::SVDMPoint, α)
+    st_spectrum = softthresh.(x.S, g.λ * α)
+    k = count(x -> x > 0, st_spectrum)
+    m = size(x.U, 1)
+    n = size(x.Vt, 2)
+    return SVDMPoint(x.U[:, 1:k], st_spectrum[1:k], x.Vt[1:k, :]),
+    FixedRankMatrices(m, n, k, ℝ)
+end
+
+
 function ∇M_g!(
     g::regularizer_lnuclear,
     ::FixedRankMatrices{m,n,k},
@@ -58,7 +68,7 @@ function ∇²M_g_ξ!(
     M::FixedRankMatrices{m,n,k},
     hess_gxξ,
     x::SVDMPoint,
-    ξ,
+    ξ::UMVTVector,
 ) where {m,n,k}
 
 

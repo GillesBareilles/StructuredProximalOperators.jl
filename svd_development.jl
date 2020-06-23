@@ -3,11 +3,11 @@ using LinearAlgebra
 using Random
 using Manifolds
 
-function get_Ṡ(M::FixedRankMatrices{m,n,k,ℝ}, x, ξ) where {m,n,k}
+function get_Ṡ(::FixedRankMatrices{m,n,k,ℝ}, x, ξ) where {m,n,k}
     return Vector([ξ.M[i, i] for i in 1:k])
 end
 
-function get_U̇(M::FixedRankMatrices{m,n,k,ℝ}, x, ξ) where {m,n,k}
+function get_U̇(::FixedRankMatrices{m,n,k,ℝ}, x, ξ) where {m,n,k}
     F = zeros(k, k)
     for i in 1:k, j in 1:k
         if x.S[i] != x.S[j]
@@ -18,7 +18,7 @@ function get_U̇(M::FixedRankMatrices{m,n,k,ℝ}, x, ξ) where {m,n,k}
     return x.U * (F .* (ξ.M * Diagonal(x.S) + Diagonal(x.S) * ξ.M')) +
            ξ.U * Diagonal(x.S .^ (-1))
 end
-function get_V̇t(M::FixedRankMatrices{m,n,k,ℝ}, x, ξ) where {m,n,k}
+function get_V̇t(::FixedRankMatrices{m,n,k,ℝ}, x, ξ) where {m,n,k}
     F = zeros(k, k)
     for i in 1:k, j in 1:k
         if x.S[i] != x.S[j]
@@ -41,16 +41,9 @@ function main()
     Random.seed!(4158)
     ξ = randomTVector(M, x)
 
-    ###
-    # Handling svd complications
-    # x_emb = embed(M, x)
-    # F_x = svd(x_emb)
-
-    # x = SVDMPoint(F_x.U[:, 1:k], F_x.S[1:k], F_x.Vt[1:k, :])
-
-    ###
     x_emb = embed(M, x)
     ξ_emb = embed(M, x, ξ)
+
 
     γ(t) = retract(M, x, t * ξ)
     function errors_retraction(t)

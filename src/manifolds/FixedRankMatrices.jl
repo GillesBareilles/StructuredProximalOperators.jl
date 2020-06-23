@@ -63,10 +63,10 @@ function retract(M::FixedRankMatrices{m,n,k,ℝ}, x, ξ) where {m,n,k}
 end
 
 function project!(
-    M::FixedRankMatrices{m,n,k,ℝ},
+    ::FixedRankMatrices{m,n,k,ℝ},
     ξ::AbstractMatrix,
-    p,
-    A::AbstractMatrix,
+    p::SVDMPoint,
+    A,
 ) where {m,n,k}
     av = A * (p.Vt')
     uTav = p.U' * av
@@ -79,7 +79,7 @@ function project!(
     M::FixedRankMatrices{m,n,k,ℝ},
     ξ::AbstractMatrix,
     x::AbstractMatrix,
-    A::AbstractMatrix,
+    A,
 ) where {m,n,k}
     F = svd(x)
 

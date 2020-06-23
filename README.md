@@ -33,15 +33,26 @@ The manifolds try to stick to the API of `Manifolds.jl`, as defined [here](https
 julia> M = FixedRankMatrices(5, 6, 3)
 FixedRankMatrices(5, 6, 3, ℝ)
 
-julia> check_retraction(M)
+julia> errors = check_retraction(M);
+julia> display_curvescomparison(errors)
 
-julia> check_e2r_gradient_hessian(M)
+julia> errors = check_e2r_gradient_hessian(M);
 - gradf(x) ∈ T_x M:				true
 - η ∈ T_x M:					true
 - Hess f(x)[η] ∈ T_x M:				true
 - Hess f(x)[ξ] ∈ T_x M:				true
 - ⟨Hess f(x)[ξ], η⟩ - ⟨Hess f(x)[η], ξ⟩:	0.0
 (ηgradfx, ηHessf_xη) = (-1.3226415096782111, 1.50236594681146)
+julia> display_curvescomparison(errors)
+
+julia> g = regularizer_lnuclear(2.0)
+julia> errors = check_regularizer_gradient_hessian(M, g);
+- gradf(x) ∈ T_x M:				true
+- Hess f(x)[η] ∈ T_x M:				true
+- Hess f(x)[ξ] ∈ T_x M:				true
+- ⟨Hess f(x)[ξ], η⟩ - ⟨Hess f(x)[η], ξ⟩:	-6.938893903907228e-17
+(ηgradfx, ηHessf_xη) = (1.6509397816841371, 0.20523220892922506)
+julia> display_curvescomparison(errors)
 ```
 
 ## TODOS:
@@ -59,4 +70,7 @@ WIP: get a first order development of the singular value decomposition, to be us
 - Slope detection implemented. Review of test threshold parameters for regression would be good.
 
 TODO:
-- properly test first and second order devs (tangent space, symmetry, slopes) for regularizers / conversion functions.
+- [ ] Properly test first and second order devs (tangent space, symmetry, slopes) for regularizers / conversion functions.
+
+### Tuesday 23rd june:
+- Theoretical formula for prox differential numerically checked. See `prox_development.jl`.
