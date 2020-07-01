@@ -4,11 +4,15 @@ using LinearAlgebra
 using FiniteDifferences
 using ForwardDiff
 
+function optimize_proxgrad(pb, x)
+
+
 function main()
     m, n = 5, 6
     k = 4
     α = 2.0
     g = regularizer_lnuclear(1.0)
+
 
     M = FixedRankMatrices(m, n, k, ℝ)
     Random.seed!(1234)
@@ -52,7 +56,7 @@ function main()
 
     # 2. Approximate projection derivative by finite differences:
     function proj(x, v)
-        return project(N, x, v)
+        return project(M_opt, x, v)
     end
     proj_v(x) = proj(x, y_emb - x_emb)
 
