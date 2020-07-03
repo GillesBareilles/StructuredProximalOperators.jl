@@ -7,9 +7,13 @@ end
 
 
 ## 0th order
-(reg::regularizer_l1)(x) = reg.λ * norm(x, 1)
+g(reg::regularizer_l1, x) = reg.λ * norm(x, 1)
 
 ## 1st order
+function prox_αg!(reg::regularizer_l1, res, x, α)
+    res .= softthresh.(x, reg.λ * α)
+    return l1Manifold(map(x -> abs(x) > 0, res))
+end
 function prox_αg(reg::regularizer_l1, x, α)
     res = softthresh.(x, reg.λ * α)
     return res, l1Manifold(map(x -> abs(x) > 0, res))

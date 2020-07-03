@@ -8,12 +8,12 @@ end
 
 
 ## 0th order
-function (g::regularizer_lnuclear)(x)
-    return g.λ * norm(svd(x).S, 1)
+function g(reg::regularizer_lnuclear, x)
+    return reg.λ * norm(svd(x).S, 1)
 end
 
-function (g::regularizer_lnuclear)(x::SVDMPoint)
-    return sum(x.S)
+function g(reg::regularizer_lnuclear, x::SVDMPoint)
+    return reg.λ * sum(x.S)
 end
 
 ## 1st order
@@ -70,8 +70,6 @@ function ∇²M_g_ξ!(
     x::SVDMPoint,
     ξ::UMVTVector,
 ) where {m,n,k}
-
-
     F = zeros(k, k)
     @inbounds for i in 1:k, j in 1:k
         if x.S[i] != x.S[j]

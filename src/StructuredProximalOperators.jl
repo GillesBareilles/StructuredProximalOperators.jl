@@ -28,6 +28,7 @@ using PGFPlotsX, LaTeXStrings, ForwardDiff
 import Base: show, ==
 
 ## Manifolds exports
+export Manifold
 export manifold_dimension
 export randomMPoint, randomTVector
 export inner, norm
@@ -41,11 +42,11 @@ export representation_size
 export embed!, embed, zero_tangent_vector
 
 ## Regularizers exports
-export prox_αg, ∇M_g, ∇M_g!, ∇²M_g_ξ, ∇²M_g_ξ!
+export prox_αg, prox_αg!, ∇M_g, ∇M_g!, ∇²M_g_ξ, ∇²M_g_ξ!
 export l1Manifold, regularizer_l1
 export FixedRankMatrices, regularizer_lnuclear, ℝ
 export SVDMPoint, UMVTVector
-
+export Euclidean
 
 abstract type Regularizer end
 
