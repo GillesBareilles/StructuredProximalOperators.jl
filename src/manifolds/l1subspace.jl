@@ -9,6 +9,10 @@ end
 
 ==(M::l1Manifold, N::l1Manifold) = (M.nnz_coords == N.nnz_coords)
 
+function <(M::l1Manifold, N::l1Manifold)
+    return M.nnz_coords < N.nnz_coords
+end
+
 function check_manifold_point(M::l1Manifold{n}, x; kwargs...) where {n}
     if size(x) != (n,)
         return DomainError(size(x), "x should be vector of size $n.")

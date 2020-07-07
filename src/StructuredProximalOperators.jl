@@ -25,7 +25,7 @@ using Random
 
 using PGFPlotsX, LaTeXStrings, ForwardDiff
 
-import Base: show, ==
+import Base: show, ==, <
 
 ## Manifolds exports
 export Manifold
@@ -47,6 +47,8 @@ export l1Manifold, regularizer_l1
 export FixedRankMatrices, regularizer_lnuclear, ℝ
 export SVDMPoint, UMVTVector
 export Euclidean
+export wholespace_manifold
+export Regularizer
 
 abstract type Regularizer end
 

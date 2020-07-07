@@ -27,6 +27,8 @@ julia> ∇²M_g_ξ(g, M, x, ξ); #For some tangent vector ξ.
 
 The manifolds try to stick to the API of `Manifolds.jl`, as defined [here](https://juliamanifolds.github.io/Manifolds.jl/latest/interface.html).
 
+Manifolds implement partial order, natural when looking at regularizers, and `wholespace_manifold`.
+
 ### Checking retractions, gradient and hessians
 
 ```julia

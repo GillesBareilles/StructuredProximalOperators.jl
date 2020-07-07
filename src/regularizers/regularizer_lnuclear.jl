@@ -6,6 +6,10 @@ struct regularizer_lnuclear <: Regularizer
     λ::Float64
 end
 
+function wholespace_manifold(reg::regularizer_lnuclear, x)
+    m, n = size(x)
+    return FixedRankMatrices(m, n, max(m, n))
+end
 
 ## 0th order
 function g(reg::regularizer_lnuclear, x)

@@ -5,6 +5,9 @@ struct regularizer_l1 <: Regularizer
     λ::Float64
 end
 
+function wholespace_manifold(reg::regularizer_l1, x)
+    return l1Manifold(ones(size(x)))
+end
 
 ## 0th order
 g(reg::regularizer_l1, x) = reg.λ * norm(x, 1)

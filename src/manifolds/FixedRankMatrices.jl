@@ -1,4 +1,11 @@
 
+function <(
+    ::FixedRankMatrices{m1,n1,k1,ℝ},
+    ::FixedRankMatrices{m2,n2,k2,ℝ},
+) where {m1,n1,k1,m2,n2,k2}
+    return m1 == m2 && n1 == n2 && k1 < k2
+end
+
 function randomMPoint(M::FixedRankMatrices{m,n,k,ℝ}) where {m,n,k}
     A = rand(m, n)
     F = svd(A)
