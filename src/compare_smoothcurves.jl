@@ -54,7 +54,7 @@ function check_regularizer_gradient_hessian(M, reg)
     ξ = randomTVector(M, x)
     η = randomTVector(M, x)
 
-    f(x) = reg(x)
+    f(x) = g(reg, x)
     gradf_x = ∇M_g(reg, M, x)
     hessf_x_ξ = ∇²M_g_ξ(reg, M, x, ξ)
     hessf_x_η = ∇²M_g_ξ(reg, M, x, η)

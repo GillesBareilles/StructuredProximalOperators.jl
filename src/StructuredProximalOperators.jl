@@ -42,7 +42,7 @@ export representation_size
 export embed!, embed, zero_tangent_vector
 
 ## Regularizers exports
-export prox_αg, prox_αg!, ∇M_g, ∇M_g!, ∇²M_g_ξ, ∇²M_g_ξ!
+export g, prox_αg, prox_αg!, ∇M_g, ∇M_g!, ∇²M_g_ξ, ∇²M_g_ξ!
 export l1Manifold, regularizer_l1
 export FixedRankMatrices, regularizer_lnuclear, ℝ
 export SVDMPoint, UMVTVector
