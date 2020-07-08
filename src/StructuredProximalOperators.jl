@@ -29,6 +29,8 @@ import Base: show, ==, <
 
 ## Manifolds exports
 export Manifold
+export SVDMPoint, UMVTVector
+export Euclidean, ℝ
 export manifold_dimension
 export randomMPoint, randomTVector
 export inner, norm
@@ -43,10 +45,11 @@ export embed!, embed, zero_tangent_vector
 
 ## Regularizers exports
 export g, prox_αg, prox_αg!, ∇M_g, ∇M_g!, ∇²M_g_ξ, ∇²M_g_ξ!
+
 export l1Manifold, regularizer_l1
-export FixedRankMatrices, regularizer_lnuclear, ℝ
-export SVDMPoint, UMVTVector
-export Euclidean
+export FixedRankMatrices, regularizer_lnuclear
+export PSphere, regularizer_distball
+
 export wholespace_manifold
 export Regularizer
 
@@ -72,10 +75,12 @@ end
 ## Manifolds
 include("manifolds/l1subspace.jl")
 include("manifolds/FixedRankMatrices.jl")
+include("manifolds/PShpere.jl")
 
 ## Regularizers
 include("regularizers/regularizer_l1.jl")
 include("regularizers/regularizer_lnuclear.jl")
+include("regularizers/regularizer_distball.jl")
 
 
 include("compare_smoothcurves.jl")
