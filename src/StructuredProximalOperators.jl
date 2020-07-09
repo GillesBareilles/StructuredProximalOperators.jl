@@ -25,7 +25,8 @@ using Random
 
 using PGFPlotsX, LaTeXStrings, ForwardDiff
 
-import Base: show, ==, <
+import Manifolds: show
+import Base: show, ==, <, copy
 
 ## Manifolds exports
 export Manifold
@@ -51,9 +52,27 @@ export FixedRankMatrices, regularizer_lnuclear
 export PSphere, regularizer_distball
 
 export wholespace_manifold
+
+export copy
 export Regularizer
 
 abstract type Regularizer end
+
+<(::Euclidean, ::Euclidean) = false
+
+
+
+function show(io::IO, M::Euclidean)
+    return print(io, name(M))
+end
+function name(M::Euclidean{dim, 𝔽}; short = true) where {dim, 𝔽}
+    rep = representation_size(M)
+    if length(rep)==1
+        return "$𝔽 ^"*string(rep[1])
+    else
+        return "$𝔽 ^"*string(rep)
+    end
+end
 
 
 ## Helper

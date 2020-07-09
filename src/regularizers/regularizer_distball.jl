@@ -24,7 +24,7 @@ function prox_αg!(reg::regularizer_distball, res, x, α)
         res .= x
     elseif reg.r < normxp ≤ reg.r + α
         res .= reg.r .* x ./ normxp
-        M = Sphere{p,r}(size(x)...)
+        M = PSphere(reg.p, reg.r, size(x)...)
     else
         res .= x .* (1 - α / normxp)
     end

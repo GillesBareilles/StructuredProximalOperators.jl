@@ -13,9 +13,9 @@ end
 
 ==(M::PSphere, N::PSphere) = M.p == N.p && M.r == N.r && M.n == N.n
 
-function <(::PSphere, ::PSphere)
-    return false
-end
+<(::PSphere, ::PSphere) = false
+<(::PSphere, ::Euclidean) = true
+<(::Euclidean, ::PSphere) = false
 
 function check_manifold_point(M::PSphere, x; kwargs...)
     if size(x) != (M.n,)
@@ -42,6 +42,14 @@ function check_tangent_vector(M::PSphere, x, ξ; check_base_point = true, kwargs
     return nothing
 end
 
+function name(M::PSphere; short = true)
+    return short ? "𝕊(p=$(M.p), r=$(M.r))" :
+           "$(M.p)-sphere of radius $(M.r)"
+end
+
+function Base.show(io::IO, M::PSphere)
+    return print(io, name(M))
+end
 
 # distance(::PSphere, p, q) = norm(p - q)
 

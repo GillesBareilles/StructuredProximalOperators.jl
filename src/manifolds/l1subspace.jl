@@ -36,6 +36,9 @@ function check_tangent_vector(M::l1Manifold, x, ξ; check_base_point = true, kwa
     return nothing
 end
 
+
+copy(M::l1Manifold) = l1Manifold(copy(M.nnz_coords))
+
 # decorated_manifold(M::l1Manifold) = Euclidean(representation_size(M)...; field = ℝ)
 
 
