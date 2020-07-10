@@ -1,7 +1,7 @@
 ##
 ## distance to ||⋅||_p ball of radius r
 ##
-struct regularizer_distball <: Regularizer
+@with_kw mutable struct regularizer_distball <: Regularizer
     λ::Float64
     p::Float64
     r::Float64

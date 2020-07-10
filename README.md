@@ -6,8 +6,6 @@
 [![codecov](https://codecov.io/gh/GillesBareilles/StructuredProximalOperators.jl/branch/master/graph/badge.svg?token=Rh5kDktLgR)](https://codecov.io/gh/GillesBareilles/StructuredProximalOperators.jl)
 
 
-
-
 Implement useful tools for handling non-smooth regularizers, l1 and nuclear norm for now. We implement the following methods
 
 ```julia
@@ -31,6 +29,12 @@ julia> ∇²M_g_ξ(g, M, x, ξ); #For some tangent vector ξ.
 The manifolds try to stick to the API of `Manifolds.jl`, as defined [here](https://juliamanifolds.github.io/Manifolds.jl/latest/interface.html).
 
 Manifolds implement partial order, natural when looking at regularizers, and `wholespace_manifold`.
+
+### Implemented regularizers
+- l1 norm;
+- nuclear norm;
+- distance to ball;
+- group norm (for l1 or distance to ball).
 
 ### Checking retractions, gradient and hessians
 

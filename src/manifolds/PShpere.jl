@@ -23,7 +23,10 @@ function check_manifold_point(M::PSphere, x; kwargs...)
     end
     norm_x = norm(x, M.p)
     if !isapprox(norm_x, M.r)
-        return DomainError(norm_x - M.r, "p-norm of x supposed to be r, residual is $norm_x.")
+        return DomainError(
+            norm_x - M.r,
+            "p-norm of x supposed to be r, residual is $norm_x.",
+        )
     end
     return nothing
 end
@@ -34,17 +37,19 @@ function check_tangent_vector(M::PSphere, x, ξ; check_base_point = true, kwargs
         mpe === nothing || return mpe
     end
 
-    normalvector = x.^(M.p-1) ./ norm(x, M.p)^(1-M.p)
+    normalvector = x .^ (M.p - 1) ./ norm(x, M.p)^(1 - M.p)
     tangent_component = dot(x, ξ)
     if !isapprox(tangent_component, 0.0)
-        return DomainError(tangent_component, "p-norm of x supposed to be r, residual is $tangent_component.")
+        return DomainError(
+            tangent_component,
+            "p-norm of x supposed to be r, residual is $tangent_component.",
+        )
     end
     return nothing
 end
 
 function name(M::PSphere; short = true)
-    return short ? "𝕊(p=$(M.p), r=$(M.r))" :
-           "$(M.p)-sphere of radius $(M.r)"
+    return short ? "𝕊(p=$(M.p), r=$(M.r))" : "$(M.p)-sphere of radius $(M.r)"
 end
 
 function Base.show(io::IO, M::PSphere)

@@ -2,7 +2,7 @@
 ##
 ## Nuclear norm regularization
 ##
-struct regularizer_lnuclear <: Regularizer
+@with_kw mutable struct regularizer_lnuclear <: Regularizer
     λ::Float64
 end
 

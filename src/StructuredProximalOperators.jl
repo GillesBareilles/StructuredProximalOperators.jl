@@ -1,5 +1,6 @@
 module StructuredProximalOperators
 
+using Parameters
 import LinearAlgebra: norm
 import Manifolds:
     check_manifold_point,
@@ -50,6 +51,7 @@ export g, prox_αg, prox_αg!, ∇M_g, ∇M_g!, ∇²M_g_ξ, ∇²M_g_ξ!
 export l1Manifold, regularizer_l1
 export FixedRankMatrices, regularizer_lnuclear
 export PSphere, regularizer_distball
+export ProductManifold, regularizer_group
 
 export wholespace_manifold
 
@@ -65,19 +67,25 @@ abstract type Regularizer end
 function show(io::IO, M::Euclidean)
     return print(io, name(M))
 end
-function name(M::Euclidean{dim, 𝔽}; short = true) where {dim, 𝔽}
+function name(M::Euclidean{dim,𝔽}; short = true) where {dim,𝔽}
     rep = representation_size(M)
-    if length(rep)==1
-        return "$𝔽 ^"*string(rep[1])
-    else
-        return "$𝔽 ^"*string(rep)
+    res = "$𝔽 ^" * string(rep)
+    if length(rep) == 1
+        res = "$𝔽 ^" * string(rep[1])
     end
+    return res
 end
 
 
 ## Helper
 softthresh(x, α) = sign(x) * max(0, abs(x) - α)
 
+
+function prox_αg(reg::T, x, α) where {T<:Regularizer}
+    res = zero(x)
+    M = prox_αg!(reg, res, x, α)
+    return res, M
+end
 
 ##
 egrad_to_rgrad!(M::Manifold, gradf_x, x, ∇f_x) = project!(M, gradf_x, x, ∇f_x)
@@ -90,6 +98,9 @@ function ehess_to_rhess(M::Manifold, x, ∇f_x, ∇²f_ξ, ξ)
     return ehess_to_rhess!(M, Hessf_xξ, x, ∇f_x, ∇²f_ξ, ξ)
 end
 
+function wholespace_manifold(::Tr, x) where {Tr<:Regularizer}
+    return Euclidean(size(x)...)
+end
 
 ## Manifolds
 include("manifolds/l1subspace.jl")
@@ -100,6 +111,7 @@ include("manifolds/PShpere.jl")
 include("regularizers/regularizer_l1.jl")
 include("regularizers/regularizer_lnuclear.jl")
 include("regularizers/regularizer_distball.jl")
+include("regularizers/regularizer_group.jl")
 
 
 include("compare_smoothcurves.jl")

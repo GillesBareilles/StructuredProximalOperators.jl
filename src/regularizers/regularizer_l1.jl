@@ -1,7 +1,7 @@
 ##
 ## L1 regularization
 ##
-struct regularizer_l1 <: Regularizer
+@with_kw mutable struct regularizer_l1 <: Regularizer
     λ::Float64
 end
 
