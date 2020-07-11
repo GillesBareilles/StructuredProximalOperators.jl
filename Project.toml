@@ -20,6 +20,7 @@ LaTeXStrings = "1.1"
 Manifolds = "^0.3.3"
 ManifoldsBase = "0.9"
 PGFPlotsX = "1.2"
+Parameters = "0.12"
 julia = "1.4"
 
 [extras]
