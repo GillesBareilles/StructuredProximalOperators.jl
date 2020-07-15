@@ -62,6 +62,14 @@ abstract type Regularizer end
 
 <(::Euclidean, ::Euclidean) = false
 
+function copy(M::Euclidean{N,𝔽}) where {N,𝔽}
+    return Euclidean(representation_size(M)...; field = 𝔽)
+end
+
+function copy(M::ProductManifold{𝔽,TM}) where {𝔽,TM}
+    return ProductManifold(M.manifolds...)
+end
+
 
 
 function show(io::IO, M::Euclidean)

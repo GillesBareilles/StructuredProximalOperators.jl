@@ -6,6 +6,9 @@ function <(
     return m1 == m2 && n1 == n2 && k1 < k2
 end
 
+copy(::FixedRankMatrices{m,n,k,ℝ}) where {m,n,k} = FixedRankMatrices(m, n, k)
+
+
 function randomMPoint(M::FixedRankMatrices{m,n,k,ℝ}) where {m,n,k}
     A = rand(m, n)
     F = svd(A)

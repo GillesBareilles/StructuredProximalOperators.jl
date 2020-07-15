@@ -14,8 +14,14 @@ end
 ==(M::PSphere, N::PSphere) = M.p == N.p && M.r == N.r && M.n == N.n
 
 <(::PSphere, ::PSphere) = false
-<(::PSphere, ::Euclidean) = true
+<(M1::PSphere, M2::Euclidean) = representation_size(M1) == representation_size(M2)
 <(::Euclidean, ::PSphere) = false
+
+copy(M::PSphere) = PSphere(M.p, M.r, M.n)
+
+function representation_size(M::PSphere)
+    return (M.n,)
+end
 
 function check_manifold_point(M::PSphere, x; kwargs...)
     if size(x) != (M.n,)
@@ -49,7 +55,7 @@ function check_tangent_vector(M::PSphere, x, ξ; check_base_point = true, kwargs
 end
 
 function name(M::PSphere; short = true)
-    return short ? "𝕊(p=$(M.p), r=$(M.r))" : "$(M.p)-sphere of radius $(M.r)"
+    return short ? "𝕊($(M.p), $(M.r))" : "$(M.p)-sphere of radius $(M.r)"
 end
 
 function Base.show(io::IO, M::PSphere)

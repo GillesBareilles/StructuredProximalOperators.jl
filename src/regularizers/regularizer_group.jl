@@ -6,6 +6,16 @@
     regs::Vector{Tr}
 end
 
+function <(M1::ProductManifold, M2::ProductManifold)
+    return M1.manifolds < M2.manifolds
+end
+
+function wholespace_manifold(reg::regularizer_group{Tr}, x) where {Tr}
+    return ProductManifold([
+        wholespace_manifold(reg.regs[i], x[group]) for (i, group) in enumerate(reg.groups)
+    ]...)
+end
+
 
 ## 0th order
 function g(reg::regularizer_group, x)
