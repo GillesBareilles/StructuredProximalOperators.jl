@@ -17,6 +17,7 @@ import Manifolds:
     representation_size,
     retract,
     retract!,
+    show,
     zero_tangent_vector
 using LinearAlgebra
 using ManifoldsBase
