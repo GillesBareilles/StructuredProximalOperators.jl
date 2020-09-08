@@ -70,7 +70,7 @@ exp!(::l1Manifold, y, x, ξ) = (@. y = x + ξ)
 
 @inline log!(M::l1Manifold, ξ, x, y) = (ξ .= y .- x)
 
-manifold_dimension(::l1Manifold{n}) where {n} = n
+manifold_dimension(M::l1Manifold{n}) where {n} = sum(M.nnz_coords)
 
 function name(M::l1Manifold; short = true)
     return short ? "l1-$(sum(M.nnz_coords))/$(length(M.nnz_coords))" :
