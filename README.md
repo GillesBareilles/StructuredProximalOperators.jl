@@ -10,20 +10,20 @@ Implement useful tools for handling non-smooth regularizers, l1 and nuclear norm
 
 ```julia
 julia> using StructuredProximalOperators
-julia> g = regularizer_lnuclear();
+julia> r = regularizer_lnuclear(λ = 1.0);
 julia> x = rand(7, 8);
 
-julia> g(x)
+julia> g(r, x)
 7.0841856836292365
 
-julia> prox_αg(g, x, 1.0);
+julia> prox_αg(r, x, 1.0);
 
-julia> y, M = prox_αg(g, x, 1.0); M
+julia> y, M = prox_αg(r, x, 1.0); M
 FixedRankMatrices(7, 8, 2, ℝ)
 
-julia> ∇M_g(g, M, y);
+julia> ∇M_g(r, M, y);
 
-julia> ∇²M_g_ξ(g, M, x, ξ); #For some tangent vector ξ.
+julia> ∇²M_g_ξ(r, M, x, ξ); #For some tangent vector ξ.
 ```
 
 The manifolds try to stick to the API of `Manifolds.jl`, as defined [here](https://juliamanifolds.github.io/Manifolds.jl/latest/interface.html).
@@ -46,17 +46,17 @@ julia> errors = check_retraction(M);
 julia> display_curvescomparison(errors)
 
 julia> errors = check_e2r_gradient_hessian(M);
-- gradf(x) ∈ T_x M:				true
-- η ∈ T_x M:					true
+- gradf(x) ∈ T_x M:				    true
+- η ∈ T_x M:					    true
 - Hess f(x)[η] ∈ T_x M:				true
 - Hess f(x)[ξ] ∈ T_x M:				true
 - ⟨Hess f(x)[ξ], η⟩ - ⟨Hess f(x)[η], ξ⟩:	0.0
 (ηgradfx, ηHessf_xη) = (-1.3226415096782111, 1.50236594681146)
 julia> display_curvescomparison(errors)
 
-julia> g = regularizer_lnuclear(2.0)
-julia> errors = check_regularizer_gradient_hessian(M, g);
-- gradf(x) ∈ T_x M:				true
+julia> r = regularizer_lnuclear(2.0)
+julia> errors = check_regularizer_gradient_hessian(M, r);
+- gradf(x) ∈ T_x M:				    true
 - Hess f(x)[η] ∈ T_x M:				true
 - Hess f(x)[ξ] ∈ T_x M:				true
 - ⟨Hess f(x)[ξ], η⟩ - ⟨Hess f(x)[η], ξ⟩:	-6.938893903907228e-17

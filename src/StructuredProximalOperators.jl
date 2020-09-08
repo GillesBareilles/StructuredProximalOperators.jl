@@ -17,7 +17,6 @@ import Manifolds:
     representation_size,
     retract,
     retract!,
-    show,
     zero_tangent_vector
 using LinearAlgebra
 using ManifoldsBase
@@ -73,9 +72,6 @@ end
 
 
 
-function show(io::IO, M::Euclidean)
-    return print(io, name(M))
-end
 function name(M::Euclidean{dim,𝔽}; short = true) where {dim,𝔽}
     rep = representation_size(M)
     res = "$𝔽 ^" * string(rep)
@@ -90,11 +86,40 @@ end
 softthresh(x, α) = sign(x) * max(0, abs(x) - α)
 
 
+
+## Interface
+
+function g(::Regularizer, x)
+    return error("g not implemented for regularizer $(typeof(g)) and point $(typeof(x)).")
+end
+
+
 function prox_αg(reg::T, x, α) where {T<:Regularizer}
     res = zero(x)
     M = prox_αg!(reg, res, x, α)
     return res, M
 end
+function prox_αg!(g, res, x, α)
+    return error("prox_αg! not implemented for regularizer $(typeof(g)), point $(typeof(x)).")
+end
+
+function ∇M_g(g, M, x)
+    res = zero(x)
+    ∇M_g!(g, M, res, x)
+    return res
+end
+function ∇M_g!(g, M, x)
+    return error("∇M_g! not implemented for regularizer $(typeof(g)), manifold $M, point $(typeof(x)).")
+end
+
+function ∇²M_g_ξ(g, M, x, ξ)
+    return error("∇²M_g_ξ not implemented for regularizer $(typeof(g)), manifold $M, point $(typeof(x)), vector $(typeof(ξ)).")
+end
+function ∇²M_g_ξ!(g, M, res, x, ξ)
+    return error("∇²M_g_ξ not implemented for regularizer $(typeof(g)), manifold $M, result $(typeof(res)), point $(typeof(x)), vector $(typeof(ξ)).")
+end
+
+
 
 ##
 egrad_to_rgrad!(M::Manifold, gradf_x, x, ∇f_x) = project!(M, gradf_x, x, ∇f_x)
