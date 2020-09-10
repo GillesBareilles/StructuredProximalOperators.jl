@@ -21,14 +21,24 @@ function g(reg::regularizer_lnuclear, x::SVDMPoint)
 end
 
 ## 1st order
-function prox_αg(g::regularizer_lnuclear, x, α)
+function prox_αg!(g::regularizer_lnuclear, res, x, α)
     F = svd(x)
     st_spectrum = softthresh.(F.S, g.λ * α)
     k = count(x -> x > 0, st_spectrum)
     m, n = size(x)
+    res .= F.U * Diagonal(st_spectrum) * F.Vt
 
-    return F.U * Diagonal(st_spectrum) * F.Vt, FixedRankMatrices(m, n, k, ℝ)
+    return FixedRankMatrices(m, n, k, ℝ)
 end
+
+# function prox_αg(g::regularizer_lnuclear, x, α)
+#     F = svd(x)
+#     st_spectrum = softthresh.(F.S, g.λ * α)
+#     k = count(x -> x > 0, st_spectrum)
+#     m, n = size(x)
+
+#     return F.U * Diagonal(st_spectrum) * F.Vt, FixedRankMatrices(m, n, k, ℝ)
+# end
 
 function prox_αg(g::regularizer_lnuclear, x::SVDMPoint, α)
     st_spectrum = softthresh.(x.S, g.λ * α)
