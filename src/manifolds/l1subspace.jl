@@ -64,6 +64,8 @@ end
 embed(::l1Manifold, x) = x
 embed(::l1Manifold, x, ξ) = ξ
 
+embedding_dimension(M::l1Manifold) = length(M.nnz_coords)
+
 exp!(::l1Manifold, y, x, ξ) = (@. y = x + ξ)
 
 @inline inner(::l1Manifold, x, ξ, η) = dot(ξ, η)

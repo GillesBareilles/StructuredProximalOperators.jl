@@ -44,6 +44,7 @@ export check_manifold_point, check_tangent_vector, show
 export is_manifold_point, is_tangent_vector
 export representation_size
 export embed!, embed, zero_tangent_vector
+export embedding_dimension
 
 ## Regularizers exports
 export g, prox_αg, prox_αg!, ∇M_g, ∇M_g!, ∇²M_g_ξ, ∇²M_g_ξ!

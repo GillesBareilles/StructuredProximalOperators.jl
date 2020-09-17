@@ -8,6 +8,7 @@ end
 
 copy(::FixedRankMatrices{m,n,k,ℝ}) where {m,n,k} = FixedRankMatrices(m, n, k)
 
+embedding_dimension(::FixedRankMatrices{m,n,k,ℝ}) where {m,n,k} = m*n
 
 function randomMPoint(M::FixedRankMatrices{m,n,k,ℝ}) where {m,n,k}
     A = rand(m, n)
@@ -97,6 +98,18 @@ function project!(
     innerdecomp[(k + 1):end, (k + 1):end] .= 0
     ξ = F.U * innerdecomp * F.Vt
     return ξ
+end
+
+function project!(
+    M::FixedRankMatrices{m, n, k, ℝ},
+    res::Array{Float64},
+    A::Array{Float64},
+) where {m,n,k}
+    F = svd(A)
+    truncatedsingvals = F.S
+    F.S[k+1:end] .= 0
+    res .= F.U * Diagonal(truncatedsingvals) * F.Vt
+    return res
 end
 
 # function zero_tangent_vector(M::FixedRankMatrices{m,n,k,ℝ}, x::AbstractArray) where {m,n,k}

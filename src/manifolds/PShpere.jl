@@ -54,6 +54,8 @@ function check_tangent_vector(M::PSphere, x, ξ; check_base_point = true, kwargs
     return nothing
 end
 
+embedding_dimension(M::PSphere) = M.n
+
 function name(M::PSphere; short = true)
     return short ? "𝕊($(M.p), $(M.r))" : "$(M.p)-sphere of radius $(M.r)"
 end
