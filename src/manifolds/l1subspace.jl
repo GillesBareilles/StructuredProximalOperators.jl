@@ -6,6 +6,19 @@ function l1Manifold(nnz_coords)
     return l1Manifold{length(nnz_coords)}(convert(BitArray, nnz_coords))
 end
 
+function get_nnz_indices(M::l1Manifold)
+    inds = Vector{Int64}(undef, sum(M.nnz_coords))
+
+    i = 1
+    for (ind::Int64, val::Bool) in enumerate(M.nnz_coords)
+        if val != false
+            inds[i] = ind
+            i+=1
+        end
+    end
+    return inds
+end
+
 
 ==(M::l1Manifold, N::l1Manifold) = (M.nnz_coords == N.nnz_coords)
 
@@ -46,15 +59,8 @@ distance(::l1Manifold, p, q) = norm(p - q)
 
 
 # Euclidean to riemannian gradients, hessians at vectors.
-egrad_to_rgrad!(M::l1Manifold, gradf_x, x, ∇f_x) = project!(M, gradf_x, x, ∇f_x)  # ! this should factor out
-egrad_to_rgrad(M::l1Manifold, x, ∇f_x) = project(M, x, ∇f_x)                      # ! this should factor out
-
 function ehess_to_rhess!(M::l1Manifold, Hessf_xξ, x, ∇f_x, ∇²f_ξ, ξ)
     return project!(M, Hessf_xξ, x, ∇²f_ξ)
-end
-function ehess_to_rhess(M::l1Manifold, x, ∇f_x, ∇²f_ξ, ξ)              # ! this should factor out
-    Hessf_xξ = zeros(size(x))
-    return ehess_to_rhess!(M, Hessf_xξ, x, ∇f_x, ∇²f_ξ, ξ)
 end
 
 
@@ -87,9 +93,15 @@ function project!(M::l1Manifold, ξ, x, X)
 end
 project!(M::l1Manifold, x, X) = (@. x = X * M.nnz_coords)
 
-function randomMPoint(M::l1Manifold)
-    n = length(M.nnz_coords)
-    return (2 * rand(n) .- 1) .* M.nnz_coords
+function project(M::l1Manifold{n}, X) where {n}
+    nnz_inds = get_nnz_indices(M)
+    return sparsevec(nnz_inds, X[nnz_inds], n)
+end
+
+
+function randomMPoint(M::l1Manifold{n}) where {n}
+    nnz = manifold_dimension(M)
+    return sparsevec(get_nnz_indices(M), 2 * rand(nnz) .- 1, n)
 end
 
 function randomTVector(M::l1Manifold, x)
@@ -107,7 +119,7 @@ function Base.show(io::IO, M::l1Manifold{n}) where {n}
     return print(io, name(M))
 end
 
-# zero_tangent_vector(::l1Manifold, ::Any)
+zero_tangent_vector(M::l1Manifold{n}, ::Any) where {n} = sparsevec(get_nnz_indices(M), zeros(manifold_dimension(M)), n)
 zero_tangent_vector!(M::l1Manifold, v, p) = fill!(v, 0)
 
 

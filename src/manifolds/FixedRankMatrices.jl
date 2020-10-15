@@ -73,6 +73,13 @@ function retract(M::FixedRankMatrices{m,n,k,ℝ}, x, ξ) where {m,n,k}
     return SVDMPoint(F.U[:, 1:k], F.S[1:k], F.Vt[1:k, :])
 end
 
+function project(
+    ::FixedRankMatrices{m,n,k,ℝ},
+    X::AbstractArray
+) where {m,n,k}
+    return SVDMPoint(X, k)
+end
+
 function project!(
     ::FixedRankMatrices{m,n,k,ℝ},
     ξ::AbstractMatrix,
@@ -112,6 +119,12 @@ function project!(
     return res
 end
 
-# function zero_tangent_vector(M::FixedRankMatrices{m,n,k,ℝ}, x::AbstractArray) where {m,n,k}
-#     return zeros(representation_size(M))
-# end
+function zero_tangent_vector(M::FixedRankMatrices{m,n,k,ℝ}, x::Array{Float64, 2}) where {m,n,k}
+    return UMVTVector(zeros(m, k), zeros(k, k), zeros(n, k))
+end
+
+
+function dot(x::Array{Float64,2}, y::SVDMPoint{Array{Float64,2},Array{Float64,1},Array{Float64,2}})
+    ## TODO make use of strucutre of y here.
+    return dot(x, y.U * Diagonal(y.S) * y.Vt)
+end

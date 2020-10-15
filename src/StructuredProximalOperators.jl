@@ -1,7 +1,7 @@
 module StructuredProximalOperators
 
 using Parameters
-import LinearAlgebra: norm
+import LinearAlgebra: norm, dot
 import Manifolds:
     check_manifold_point,
     check_tangent_vector,
@@ -19,8 +19,12 @@ import Manifolds:
     retract!,
     zero_tangent_vector
 using LinearAlgebra
+using SparseArrays
+
 using ManifoldsBase
 using Manifolds
+
+using JuMP
 
 using Random
 
@@ -48,6 +52,8 @@ export embedding_dimension
 
 ## Regularizers exports
 export g, prox_αg, prox_αg!, ∇M_g, ∇M_g!, ∇²M_g_ξ, ∇²M_g_ξ!
+export model_g_subgradient!, build_subgradient_from_normalcomp
+
 
 export l1Manifold, regularizer_l1
 export FixedRankMatrices, regularizer_lnuclear
@@ -105,12 +111,10 @@ function prox_αg!(g, res, x, α)
 end
 
 function ∇M_g(g, M, x)
-    res = zero(x)
-    ∇M_g!(g, M, res, x)
-    return res
+    return error("∇M_g not implemented for regularizer $(typeof(g)), manifold $M, point $(typeof(x)).")
 end
-function ∇M_g!(g, M, x)
-    return error("∇M_g! not implemented for regularizer $(typeof(g)), manifold $M, point $(typeof(x)).")
+function ∇M_g!(g, M, res, x)
+    return error("∇M_g! not implemented for regularizer $(typeof(g)), manifold $M, result $(typeof(res)), point $(typeof(x)).")
 end
 
 function ∇²M_g_ξ(g, M, x, ξ)

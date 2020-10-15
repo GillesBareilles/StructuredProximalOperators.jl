@@ -32,3 +32,36 @@ end
 ## 2nd order
 ∇²M_g_ξ(::regularizer_l1, M::l1Manifold, x, ξ) = zeros(size(ξ))
 ∇²M_g_ξ!(::regularizer_l1, M::l1Manifold, res, x, ξ) = (res .= 0)
+
+
+
+#
+### Optimality status
+#
+function model_g_subgradient!(model, regularizer::regularizer_l1, M, x)
+    n = size(x, 1)
+    λ = regularizer.λ
+
+    d = manifold_dimension(M)
+
+    @variable(model, ḡ_normal[1:n-d])
+    @constraint(model, -λ .<= ḡ_normal .<= λ)
+
+    return ḡ_normal
+end
+
+function build_subgradient_from_normalcomp(regularizer::regularizer_l1, M, x, ḡ_normal)
+    n = size(x, 1)
+    ḡ = Vector(undef, n)
+    λ = regularizer.λ
+    ind_norm = 1
+    for i in 1:n
+        if M.nnz_coords[i]
+            ḡ[i] = sign(x[i]) * λ
+        else
+            ḡ[i] = ḡ_normal[ind_norm]
+            ind_norm += 1
+        end
+    end
+    return ḡ
+end

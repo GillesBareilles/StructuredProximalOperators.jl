@@ -84,12 +84,6 @@ end
 
 
 # Euclidean to riemannian gradients, hessians at vectors.
-function egrad_to_rgrad!(M::FixedRank{m,n,k}, gradf_x, x, ∇f_x) where {m,n,k}
-    return project!(M, gradf_x, x, ∇f_x)
-end
-egrad_to_rgrad(M::FixedRank{m,n,k}, x, ∇f_x) where {m,n,k} = project(M, x, ∇f_x)
-
-
 function ehess_to_rhess!(M::FixedRank{m,n,k}, Hessf_xξ, x, ∇f_x, ∇²f_ξ, ξ) where {m,n,k}
     F = svd(x, full = true)
 
@@ -109,11 +103,6 @@ function ehess_to_rhess!(M::FixedRank{m,n,k}, Hessf_xξ, x, ∇f_x, ∇²f_ξ, �
     Hessf_xξ += Uperp * tUperpξVperp * transpose(tB₂) * tV
     return Hessf_xξ
 end
-function ehess_to_rhess(M::FixedRank, x, ∇f_x, ∇²f_ξ, ξ)                                    # ! this should factor out
-    Hessf_xξ = zeros(size(ξ))
-    return ehess_to_rhess!(M, Hessf_xξ, x, ∇f_x, ∇²f_ξ, ξ)
-end
-
 
 function ehess2rhess(M::FixedRank{m,n,k}, x, ∇f_x, ∇²f_ξ, ξ) where {m,n,k}
     X = reshape(x, (m, n))
