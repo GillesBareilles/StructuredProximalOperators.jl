@@ -174,26 +174,27 @@ function build_subgradient_from_normalcomp(regularizer::regularizer_lnuclear, M:
     ḡ = Matrix(undef, m, n)
     λ = regularizer.λ
 
-    if length(ḡ_normal) == 0
-        ḡ .= 0.0
-    else
-        fill_ḡ!(ḡ, x)
+    ḡ = fill_ḡ!(ḡ, ḡ_normal, x, M, λ)
+
+    if length(ḡ) == 0
+        ḡ = Matrix{Float64}(ḡ)
     end
     return ḡ
 end
 
-function fill_ḡ!(ḡ, x)
+function fill_ḡ!(ḡ, ḡ_normal, x, ::FixedRankMatrices{m, n, k}, λ) where {m, n, k}
     F = svd(x)
-    S = vcat(ones(k), ḡ_normal)
+    S = vcat(λ*ones(k), ḡ_normal)
     for i in 1:m, j in 1:n
         ḡ[i, j] = dot(F.U[i, :] .* S, F.Vt[:, j])
     end
-    return
+    return ḡ
 end
 
-function fill_ḡ!(ḡ, x::SVDMPoint)
-    S = vcat(ones(k), ḡ_normal)
+function fill_ḡ!(ḡ, ḡ_normal, x::SVDMPoint, ::FixedRankMatrices{m, n, k}, λ) where {m, n, k}
+    S = vcat(λ*ones(k), ḡ_normal)
     for i in 1:m, j in 1:n
         ḡ[i, j] = dot(x.U[i, :] .* S, x.Vt[:, j])
     end
+    return ḡ
 end
