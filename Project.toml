@@ -17,6 +17,7 @@ SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 
 [compat]
 ForwardDiff = "0.10"
+JuMP = "0.21"
 LaTeXStrings = "1.1"
 Manifolds = "0.4"
 ManifoldsBase = "0.9"
