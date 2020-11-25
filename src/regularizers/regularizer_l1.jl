@@ -65,3 +65,7 @@ function build_subgradient_from_normalcomp(regularizer::regularizer_l1, M, x, g�
     end
     return ḡ
 end
+
+function build_normalcomp_from_subgradient(::regularizer_l1, M, x, ḡ)
+    return ḡ[.!M.nnz_coords]
+end

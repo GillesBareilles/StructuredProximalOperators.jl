@@ -31,25 +31,43 @@ function prox_αg!(g::regularizer_lnuclear, res::AbstractMatrix, x, α)
     return FixedRankMatrices(m, n, k, ℝ)
 end
 
-function prox_αg!(g::regularizer_lnuclear, res::SVDMPoint, x, α)
-    F = svd(x)
-    m, n = size(x)
-    res.U .= F.U
-    res.Vt .= F.Vt
-    res.S .= softthresh.(F.S, g.λ * α)
+# function prox_αg!(g::regularizer_lnuclear, res::SVDMPoint, x, α)
+#     println("-------")
+#     printstyled("coucou\n", color=:green)
 
-    k = count(x -> x > 0, res.S)
-    return FixedRankMatrices(m, n, k, ℝ)
-end
-
-# function prox_αg(g::regularizer_lnuclear, x, α)
+#     @show size(x)
+#     @show size(res.U)
+#     @show size(res.Vt)
+#     @show size(res.S)
 #     F = svd(x)
-#     st_spectrum = softthresh.(F.S, g.λ * α)
-#     k = count(x -> x > 0, st_spectrum)
 #     m, n = size(x)
+#     res_singvals = softthresh.(F.S, g.λ * α)
+#     k = count(x -> x > 0, res_singvals)
 
-#     return F.U * Diagonal(st_spectrum) * F.Vt, FixedRankMatrices(m, n, k, ℝ)
+#     @show k
+
+#     res = SVDMPoint(
+#         F.U[:, 1:k],
+#         res_singvals[1:k],
+#         F.Vt[1:k, :]
+#     )
+
+#     @show res
+#     # res.U .= F.U[:, 1:k]
+#     # res.Vt .= F.Vt[1:k, :]
+#     # res.S .= softthresh.(F.S[1:k], g.λ * α)
+
+#     return FixedRankMatrices(m, n, k, ℝ)
 # end
+
+function prox_αg(g::regularizer_lnuclear, x::AbstractMatrix, α)
+    m, n = size(x)
+    F = svd(x)
+    st_spectrum = softthresh.(F.S, g.λ * α)
+    k = count(x -> x > 0, st_spectrum)
+    return SVDMPoint(F.U[:, 1:k], st_spectrum[1:k], F.Vt[1:k, :]),
+    FixedRankMatrices(m, n, k, ℝ)
+end
 
 function prox_αg(g::regularizer_lnuclear, x::SVDMPoint, α)
     st_spectrum = softthresh.(x.S, g.λ * α)
@@ -109,24 +127,35 @@ function ∇²M_g_ξ!(
     x::SVDMPoint,
     ξ::UMVTVector,
 ) where {m,n,k}
-    F = zeros(k, k)
+
+
+    # ## 1. working implementation; litteral formula
+    # F = zeros(k, k)
+    # @inbounds for i in 1:k, j in 1:k
+    #     if x.S[i] != x.S[j]
+    #         F[i, j] = 1 / (x.S[j]^2 - x.S[i]^2)
+    #     end
+    # end
+    # U̇ =
+    #     x.U * (F .* (ξ.M * Diagonal(x.S) + Diagonal(x.S) * ξ.M')) +
+    #     ξ.U * Diagonal(x.S .^ (-1))
+    # V̇t =
+    #     (-F .* (Diagonal(x.S) * ξ.M + ξ.M' * Diagonal(x.S))) * x.Vt +
+    #     Diagonal(x.S .^ (-1)) * ξ.Vt
+
+    # project!(M, hess_gxξ, x, g.λ * (U̇ * x.Vt + x.U * V̇t))
+
+    ## 2. Simplified formula
+    F_add = zeros(k, k)
     @inbounds for i in 1:k, j in 1:k
         if x.S[i] != x.S[j]
-            F[i, j] = 1 / (x.S[j]^2 - x.S[i]^2)
+            F_add[i, j] = 1 / (x.S[j] + x.S[i])
         end
     end
 
-    ## 1. working implementation; litteral formula
-    U̇ =
-        x.U * (F .* (ξ.M * Diagonal(x.S) + Diagonal(x.S) * ξ.M')) +
-        ξ.U * Diagonal(x.S .^ (-1))
-    V̇t =
-        (-F .* (Diagonal(x.S) * ξ.M + ξ.M' * Diagonal(x.S))) * x.Vt +
-        Diagonal(x.S .^ (-1)) * ξ.Vt
-
-    project!(M, hess_gxξ, x, g.λ * (U̇ * x.Vt + x.U * V̇t))
-
-    # TODO: optimize this.
+    hess_gxξ.M .= g.λ .* F_add .* (ξ.M-ξ.M')
+    hess_gxξ.U .= g.λ * ξ.U * Diagonal(inv.(x.S))
+    hess_gxξ.Vt .= g.λ * Diagonal(inv.(x.S)) * ξ.Vt
 
     return hess_gxξ
 end
@@ -182,19 +211,20 @@ function build_subgradient_from_normalcomp(regularizer::regularizer_lnuclear, M:
     return ḡ
 end
 
+function build_normalcomp_from_subgradient(::regularizer_lnuclear, M::FixedRankMatrices{m, n, k}, x, ḡ) where {m, n, k}
+    F = svd(isa(x, SVDMPoint) ? x.U*Diagonal(x.S)*x.Vt : x)
+
+    ḡ_rep = F.U' * ḡ * F.Vt'
+    ḡ_normal = [ḡ_rep[i,i] for i in k+1:min(m, n)]
+
+    return ḡ_normal
+end
+
 function fill_ḡ!(ḡ, ḡ_normal, x, ::FixedRankMatrices{m, n, k}, λ) where {m, n, k}
-    F = svd(x)
+    F = svd(isa(x, SVDMPoint) ? x.U*Diagonal(x.S)*x.Vt : x)
     S = vcat(λ*ones(k), ḡ_normal)
     for i in 1:m, j in 1:n
         ḡ[i, j] = dot(F.U[i, :] .* S, F.Vt[:, j])
-    end
-    return ḡ
-end
-
-function fill_ḡ!(ḡ, ḡ_normal, x::SVDMPoint, ::FixedRankMatrices{m, n, k}, λ) where {m, n, k}
-    S = vcat(λ*ones(k), ḡ_normal)
-    for i in 1:m, j in 1:n
-        ḡ[i, j] = dot(x.U[i, :] .* S, x.Vt[:, j])
     end
     return ḡ
 end

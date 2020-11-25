@@ -52,7 +52,7 @@ export embedding_dimension
 
 ## Regularizers exports
 export g, prox_αg, prox_αg!, ∇M_g, ∇M_g!, ∇²M_g_ξ, ∇²M_g_ξ!
-export model_g_subgradient!, build_subgradient_from_normalcomp
+export model_g_subgradient!, build_subgradient_from_normalcomp, build_normalcomp_from_subgradient
 
 
 export l1Manifold, regularizer_l1

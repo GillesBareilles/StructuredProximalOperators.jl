@@ -48,11 +48,11 @@ function display_curvescomparison(curves)
 end
 
 
-function check_regularizer_gradient_hessian(M, reg)
-    x = randomMPoint(M)
-    p = embed(M, retract(M, x, randomTVector(M, x)))
-    ξ = randomTVector(M, x)
-    η = randomTVector(M, x)
+function check_regularizer_gradient_hessian(M, reg; x=nothing, ξ=nothing, η=nothing)
+
+    isnothing(x) && (x = randomMPoint(M))
+    isnothing(ξ) && (ξ = randomTVector(M, x))
+    isnothing(η) && (η = randomTVector(M, x))
 
     f(x) = g(reg, x)
     gradf_x = ∇M_g(reg, M, x)
