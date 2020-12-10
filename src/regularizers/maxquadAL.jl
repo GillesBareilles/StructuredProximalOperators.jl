@@ -12,13 +12,20 @@ function prox_αg!(::maxquadAL, res, xy, γ)
     ## Detect structure
     man = Euclidean(2)
 
-    if ȳ ≤ (x̄/(1+2γ))^2 + γ
-        res[1] = x̄ / (1+2γ)
-        res[2] = ȳ + γ
-    elseif (x̄/(1-2γ))^2 - γ ≤ ȳ
-        res[1] = x̄ / (1-2γ)
-        res[2] = ȳ - γ
+    if ȳ < (x̄/(1+2γ))^2 - γ
+        # printstyled("lower quad\n", color=:red)
+        res .= [
+            x̄ / (1+2γ),
+            ȳ + γ
+        ]
+    elseif (x̄/(1-2γ))^2 + γ < ȳ
+        # printstyled("upper quad\n", color=:red)
+        res .= [
+            x̄ / (1-2γ),
+            ȳ - γ
+        ]
     else
+        # printstyled("Manifold!\n", color=:red)
         man = PlaneParabola()
 
         ## Compute prox output
@@ -42,8 +49,10 @@ function prox_αg!(::maxquadAL, res, xy, γ)
         length(ts) != 1 && @warn "Prox of maxquadAL troubled" ts
         t = first(ts)
 
-        res[1] = x̄ / (1+4γ*t-2γ)
-        res[2] = ȳ + 2γ*t - γ
+        res .= [
+            x̄ / (1+4γ*t-2γ),
+            ȳ + 2γ*t - γ,
+        ]
 
         !is_manifold_point(man, res) && @warn "prox_αg! returned point not on manifold"
     end

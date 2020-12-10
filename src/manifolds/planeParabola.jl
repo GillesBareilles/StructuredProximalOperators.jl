@@ -37,7 +37,7 @@ function check_tangent_vector(M::PlaneParabola, x, ξ; check_base_point = true, 
 end
 
 
-# copy(M::PlaneParabola) = PlaneParabola(copy(M.nnz_coords))
+copy(M::PlaneParabola) = PlaneParabola()
 # distance(::PlaneParabola, p, q) = norm(p - q)
 
 
@@ -47,6 +47,9 @@ function ehess_to_rhess!(M::PlaneParabola, Hessf_xξ, x, ∇f_x, ∇²f_ξ, ξ)
 end
 
 
+function ehess_to_rhess!(M::Euclidean, Hessf_xξ, x, ∇f_x, ∇²f_ξ, ξ)
+    return Hessf_xξ .= ∇²f_ξ
+end
 
 embed(::PlaneParabola, x) = x
 embed(::PlaneParabola, x, ξ) = ξ
@@ -70,7 +73,10 @@ function project!(M::PlaneParabola, ξ, x, X)
     return ξ
 end
 
-# project!(M::PlaneParabola, x, X) = (@. x = X * M.nnz_coords)
+function project(M::PlaneParabola, x, X)
+    res = zeros(2)
+    return project!(M, res, x, X)
+end
 
 # function project(M::PlaneParabola, X)
 #     nnz_inds = get_nnz_indices(M)
