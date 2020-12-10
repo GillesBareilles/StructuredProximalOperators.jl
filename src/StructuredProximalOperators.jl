@@ -27,6 +27,7 @@ using Manifolds
 using JuMP
 
 using Random
+using PolynomialRoots
 
 using PGFPlotsX, LaTeXStrings, ForwardDiff
 
@@ -59,6 +60,7 @@ export l1Manifold, regularizer_l1
 export FixedRankMatrices, regularizer_lnuclear
 export PSphere, regularizer_distball
 export ProductManifold, regularizer_group
+export PlaneParabola, maxquadAL
 
 export wholespace_manifold
 
@@ -145,13 +147,14 @@ end
 include("manifolds/l1subspace.jl")
 include("manifolds/FixedRankMatrices.jl")
 include("manifolds/PShpere.jl")
+include("manifolds/planeParabola.jl")
 
 ## Regularizers
 include("regularizers/regularizer_l1.jl")
 include("regularizers/regularizer_lnuclear.jl")
 include("regularizers/regularizer_distball.jl")
 include("regularizers/regularizer_group.jl")
-
+include("regularizers/maxquadAL.jl")
 
 include("compare_smoothcurves.jl")
 
