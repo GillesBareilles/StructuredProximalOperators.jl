@@ -23,6 +23,7 @@ Manifolds = "0.4"
 ManifoldsBase = "0.9"
 PGFPlotsX = "1.2"
 Parameters = "0.12"
+PolynomialRoots = "1.0"
 julia = "1.4"
 
 [extras]
